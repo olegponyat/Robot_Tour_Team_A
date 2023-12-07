@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <SmartCar.cpp>
+#include <speed.cpp>
 #include <array.cpp> // custom array class
 #include <pair.cpp>
 
@@ -35,7 +36,8 @@ pair<array, array> dfs(int x, int y, array xCoords, array yCoords){
 }
 
 void setup(){
-    
+
+    calcSpeed(2, 30);    
     dfs(1, 1, array(maxn), array(maxn));
 
 
