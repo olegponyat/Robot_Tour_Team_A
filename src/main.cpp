@@ -1,48 +1,61 @@
 #include <Arduino.h>
 #include <SmartCar.cpp>
 #include <speed.cpp>
-#include <array.cpp> // custom array class
+#include <vector.cpp> // custom array class
 #include <pair.cpp>
 
-const int maxn = 4 + 1; // grid size
+#define vii vector<pair<int, int>>
+#define pii pair<int, int>
+
+const int maxn = 4; // grid size
 
 // empty = 0
 // barricade = 1
 // goal = 2
 
 SmartCar car;
-bool grid[maxn][maxn];
+int grid[maxn][maxn] = {
+    {0, 0, 0, 0},
+    {1, 1, 1, 0},
+    {0, 0, 0, 0},
+    {2, 1, 1, 1}};
 bool vis[maxn][maxn];
-int dx[4] = {1, 1, -1, -1};
-int dy[4] = {1, -1, 1, -1};
+int dx[4] = {1, -1, 0, 0};
+int dy[4] = {0, 0, 1, -1};
 
-pair<array, array> dfs(int x, int y, array xCoords, array yCoords){
-    if (x < 1 || x > maxn) return; // out of x bounds
-    if (y < 1 || y > maxn) return; // out of y bounds
-    if (grid[x][y] == 1) return; // barricade
+void dfs(pii coord){
 
-    vis[x][y] = true;
-    xCoords.push_back(x);
-    yCoords.push_back(y);
-    if (grid[x][y] == 2) { // goal
-        return pair<array, array>(xCoords, yCoords);
+    int y = coord.first;
+    int x = coord.second;
+
+    if (vis[y][x]) return;
+    if (grid[y][x] == 1) return;
+    vis[y][x] = true;
+
+    if (grid[y][x] == 2) {
+        Serial.println("FOUND!");
+        Serial.println("Exit: ( x: " + String(x) + ", y: " + String(y) + ")");
     }
 
     for (int i = 0; i < 4; i ++){
-        int nx = x + dx[i];
         int ny = y + dy[i];
-        return dfs(nx, ny, xCoords, yCoords);
+        int nx = x + dx[i];
+
+        if ( nx >= 0 && nx < maxn && ny >= 0 && ny < maxn){
+            dfs(pii(ny, nx));
+        }
     }
-}
-
-void setup(){
-
-    calcSpeed(2, 30);    
-    dfs(1, 1, array(maxn), array(maxn));
-
 
 }
 
-void loop(){
+void setup()
+{
+    Serial.begin(9600);
+    Serial.println("Started DFS");
+    dfs(pii(0, 0));
+    Serial.println("Ended DFS");
+}
 
+void loop()
+{
 }
