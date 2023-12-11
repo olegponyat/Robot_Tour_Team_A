@@ -47,6 +47,21 @@ public:
         return arr[size];
     }
 
+    void clear(){
+        this->size = 0;
+    }
+
+    void reverse(){
+        for (int i = 0; i < this->length()/2; i ++){
+            int l = i, r = this->length()-i-1;
+            T le = this->arr[l];
+            T re = this->arr[r];
+
+            this->arr[l] = re;
+            this->arr[r] = le;
+        }
+    }
+
     int length() const
     {
         return size;
