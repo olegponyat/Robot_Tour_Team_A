@@ -1,5 +1,3 @@
-
-
 float calcSpeed(int moves, float total_time){
     // 0.224*x+0.135
     float move_dist = 0.5; // one block in meters
