@@ -7,13 +7,13 @@
 #define vii vector<pair<int, int>>
 #define pii pair<int, int>
 
+/*SETTINGS*/
 const int maxn = 7; // grid size
-
+const pii start = pii(0, 0);
 // empty = 0
 // barricade = 1
 // goal = 2
 
-SmartCar car;
 
 int grid[maxn][maxn] = {
 
@@ -22,13 +22,13 @@ int grid[maxn][maxn] = {
 // 3 = intersection (impossible to get to, intersection between grid lines)
 
 //   s  l     l     l
-    {0, 0, 0, 0, 0, 0, 0},
-    {1, 3, 1, 3, 1, 3, 0}, // <- l
-    {0, 0, 0, 0, 0, 0, 0},
-    {0, 1, 1, 3, 1, 3, 1}, // <- l
-    {0, 0, 0, 0, 0, 0, 0},
-    {1, 3, 0, 3, 1, 3, 1}, // <- l
-    {0, 0, 0, 0, 0, 0, 2}
+    {0, 0, 0, 0, 1, 0, 0},
+    {0, 3, 0, 3, 1, 3, 0}, // <- l
+    {0, 1, 0, 0, 0, 0, 0},
+    {0, 3, 0, 3, 1, 3, 1}, // <- l
+    {0, 1, 0, 0, 0, 0, 0},
+    {0, 3, 1, 3, 1, 3, 0}, // <- l
+    {0, 0, 0, 0, 1, 0, 2}
 
 };
 
@@ -36,11 +36,14 @@ bool vis[maxn][maxn];
 int dx[4] = {1, -1, 0, 0};
 int dy[4] = {0, 0, 1, -1};
 
+SmartCar car;
+
 void visualize(){
     Serial.println("=== VISUALIZATION ===");
     for (int i = 0; i < maxn; i ++){
         for (int j = 0; j < maxn; j ++){
-            if (grid[i][j] == 0) Serial.print("░░");
+            if (i == start.first && j == start.second) Serial.print("🚩");
+            else if (grid[i][j] == 0) Serial.print("░░");
             else if (grid[i][j] == 1 || grid[i][j] == 3) Serial.print("██");
             else if (grid[i][j] == 2) Serial.print("⭐");
         }
@@ -91,8 +94,14 @@ void setup()
 
     Serial.println("Started DFS");
     vii result = vii();
-    dfs(pii(0, 0), result);
+    dfs(start, result);
     result.reverse(); // results are from goal to start, need to reverse
+
+    if (result.length() == 0) {
+        Serial.println("No solution");
+        return;
+    }
+    
     Serial.println("\nSteps (y, x): ");
     for (int i = 0; i < result.length(); i ++){
         Serial.print("( " + String(result.get(i).first) + ", " + String(result.get(i).second) + ") -> ");
