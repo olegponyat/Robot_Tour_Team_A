@@ -8,9 +8,12 @@
 #define pii pair<int, int>
 
 /*SETTINGS*/
-const float targetTime = 10;
+const float targetTime = 30;
 const int maxn = 7; // grid size
-const pii start = pii(0, 0);
+const pii start = pii(6, 0);
+
+/*DEBUG*/
+bool debug_move = true;
 // empty = 0
 // barricade = 1
 // goal = 2
@@ -18,18 +21,26 @@ const pii start = pii(0, 0);
 
 int grid[maxn][maxn] = {
 
-// s = start, l = grid line
-// 0 = grid, 1 = barrier, 2 = goal,
-// 3 = intersection (impossible to get to, intersection between grid lines)
+/*
+s = start, l = grid line
+0 = grid, 1 = barrier, 2 = goal,
+3 = intersection (impossible to get to, intersection between grid lines)
+
+Directions:
+N,E,S,W
+
+N = towards y = 0
+W = towards x = 0
+*/
 
 //   s  l     l     l
-    {0, 1, 0, 0, 0, 1, 0},
+    {2, 0, 0, 1, 0, 0, 0},
     {0, 3, 0, 3, 0, 3, 0}, // <- l
-    {0, 1, 0, 1, 0, 1, 0},
-    {0, 3, 0, 3, 0, 3, 0}, // <- l
-    {0, 1, 0, 1, 0, 0, 0},
-    {0, 3, 0, 3, 0, 3, 0}, // <- l
-    {0, 0, 0, 1, 0, 1, 2}
+    {0, 0, 0, 1, 0, 0, 0},
+    {0, 3, 1, 3, 1, 3, 1}, // <- l
+    {0, 0, 0, 0, 0, 0, 0},
+    {1, 3, 1, 3, 1, 3, 0}, // <- l
+    {0, 0, 0, 0, 0, 0, 0}
 
 };
 
@@ -128,9 +139,76 @@ bool dfs(pii coord, vii &paths){
 
 }
 
-void executePath(float analogSpeed, vii points){
+void turnRight(int repeats=1){
+    for (int i = 0; i < repeats; i ++){
+        car.moveRight(100);
+        delay(500);
+        car.stop();
+        delay(200);
+    }
+    car.stop();
+}
+
+void executePath(float analogSpeed, float msPerMove, vii points){
 
     Serial.println("Analog Speed: " + String(analogSpeed));
+
+    pii currentPoint = start;
+    int currentAngle = 0;
+    bool prevChangeInY = true;
+
+    for (int i = 0; i < points.length(); i ++){
+
+        pii nextPos = points.get(i);
+
+        int dy = nextPos.first - currentPoint.first;
+        int dx = nextPos.second - currentPoint.second;
+        int turns = currentAngle / 90;
+
+        if (debug_move){
+            Serial.println("[change (y,x)]( " + String(dy) + ", " + String(dx));
+        }
+
+        if (dy < 0){ // North (up)
+            if (debug_move) Serial.println("Move North");
+            if (prevChangeInY != true) turnRight(turns);
+            car.moveFoward(analogSpeed);
+            delay(msPerMove);
+            prevChangeInY = true;
+        }
+        else if (dy > 0){ // South (down)
+            if (debug_move) Serial.println("Move South");
+            if (prevChangeInY != true) turnRight(turns);
+            car.moveFoward(analogSpeed);
+            delay(msPerMove);
+            prevChangeInY = true;
+        }
+        else if (dx > 0){ // East (right)
+            if (debug_move) Serial.println("Move East");
+            if (prevChangeInY != false) {
+                turnRight(1);
+            }
+            currentAngle += 90;
+            car.moveFoward(analogSpeed);
+            delay(msPerMove);
+            prevChangeInY = false;
+        }
+        else if (dx < 0){ // West (left)
+            if (debug_move) Serial.println("Move West");
+            if (prevChangeInY != false) {
+                turnRight(3);
+            }
+            currentAngle -= 90;
+            car.moveFoward(analogSpeed);
+            delay(msPerMove);
+            prevChangeInY = false;
+        }
+
+        car.stop();
+
+        currentAngle = 0;
+        currentPoint = nextPos;
+    }
 
 }
 
@@ -155,6 +233,7 @@ void setup()
     }
 
     int moves = 0;
+    vii points;
 
     Serial.println("\nSteps (y, x): ");
     for (int i = 0; i < result.length(); i ++){
@@ -165,16 +244,20 @@ void setup()
             Serial.print("[grid]( " + String(y) + ", " + String(x) + ") -> ");
         }else{
             Serial.print("[point]( " + String(y) + ", " + String(x) + ") -> ");
+
+            points.push_back(result.get(i));
             moves++;
         }
 
     }
 
+    float secondsPerMove = targetTime / (float) moves;
+
     Serial.println("\n\n[Algorithm Summary]\n");
     Serial.println("Total Moves: " + String(moves));
 
     float analogSpeed = calcSpeed(moves, targetTime);
-    executePath(analogSpeed, result);
+    executePath(analogSpeed, secondsPerMove * 1000, points);
 
 }
 
