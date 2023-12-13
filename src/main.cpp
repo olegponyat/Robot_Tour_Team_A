@@ -8,6 +8,7 @@
 #define pii pair<int, int>
 
 /*SETTINGS*/
+const float targetTime = 10;
 const int maxn = 7; // grid size
 const pii start = pii(0, 0);
 // empty = 0
@@ -127,6 +128,12 @@ bool dfs(pii coord, vii &paths){
 
 }
 
+void executePath(float analogSpeed, vii points){
+
+    Serial.println("Analog Speed: " + String(analogSpeed));
+
+}
+
 void setup()
 {
     Serial.begin(9600);
@@ -146,11 +153,28 @@ void setup()
         Serial.println("No solution");
         return;
     }
-    
+
+    int moves = 0;
+
     Serial.println("\nSteps (y, x): ");
     for (int i = 0; i < result.length(); i ++){
-        Serial.print("( " + String(result.get(i).first) + ", " + String(result.get(i).second) + ") -> ");
+        int y = result.get(i).first;
+        int x = result.get(i).second;
+
+        if (isGridLine(y) || isGridLine(x)){
+            Serial.print("[grid]( " + String(y) + ", " + String(x) + ") -> ");
+        }else{
+            Serial.print("[point]( " + String(y) + ", " + String(x) + ") -> ");
+            moves++;
+        }
+
     }
+
+    Serial.println("\n\n[Algorithm Summary]\n");
+    Serial.println("Total Moves: " + String(moves));
+
+    float analogSpeed = calcSpeed(moves, targetTime);
+    executePath(analogSpeed, result);
 
 }
 
