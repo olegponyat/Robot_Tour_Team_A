@@ -22,30 +22,70 @@ int grid[maxn][maxn] = {
 // 3 = intersection (impossible to get to, intersection between grid lines)
 
 //   s  l     l     l
-    {0, 0, 0, 0, 1, 0, 0},
-    {0, 3, 0, 3, 1, 3, 0}, // <- l
-    {0, 1, 0, 0, 0, 0, 0},
-    {0, 3, 0, 3, 1, 3, 1}, // <- l
-    {0, 1, 0, 0, 0, 0, 0},
-    {0, 3, 1, 3, 1, 3, 0}, // <- l
-    {0, 0, 0, 0, 1, 0, 2}
+    {0, 1, 0, 0, 0, 1, 0},
+    {0, 3, 0, 3, 0, 3, 0}, // <- l
+    {0, 1, 0, 1, 0, 1, 0},
+    {0, 3, 0, 3, 0, 3, 0}, // <- l
+    {0, 1, 0, 1, 0, 0, 0},
+    {0, 3, 0, 3, 0, 3, 0}, // <- l
+    {0, 0, 0, 1, 0, 1, 2}
 
 };
 
+bool graphSetupError = false;
 bool vis[maxn][maxn];
 int dx[4] = {1, -1, 0, 0};
 int dy[4] = {0, 0, 1, -1};
 
 SmartCar car;
 
+/*
+Grid lines are odd numbers:
+- ex (for y): 1, 3, 5...
+- ex (for x): 1, 3, 5...
+*/
+bool isGridLine(int index){
+    return index%2 != 0;
+}
+
 void visualize(){
-    Serial.println("=== VISUALIZATION ===");
-    for (int i = 0; i < maxn; i ++){
-        for (int j = 0; j < maxn; j ++){
-            if (i == start.first && j == start.second) Serial.print("🚩");
-            else if (grid[i][j] == 0) Serial.print("░░");
-            else if (grid[i][j] == 1 || grid[i][j] == 3) Serial.print("██");
-            else if (grid[i][j] == 2) Serial.print("⭐");
+    Serial.println("\n[VISUALIZATION]\n");
+
+    Serial.println("🚩= start");
+    Serial.println("⭐ = end");
+    Serial.println("🛑 = intersection (impossible)");
+    Serial.println("░░ = grid line");
+    Serial.println("▒▒ = empty");
+    Serial.println("██ = barrier");
+    Serial.println();
+    for (int y = 0; y < maxn; y ++){
+        for (int x = 0; x < maxn; x ++){
+
+            if (y == start.first && x == start.second) { // start
+                Serial.print("🚩");
+            }
+            else if (grid[y][x] == 2) { // end
+                Serial.print("⭐");
+            }
+            // if it is a grid line, and it is empty. else it will be handled as barrier.
+            else if ( (isGridLine(y) || isGridLine(x)) && grid[y][x] == 0){ 
+                Serial.print("░░");
+            }
+            else if (grid[y][x] == 0) {
+                Serial.print("▒▒");
+            }
+            else if (grid[y][x] == 1) {
+                Serial.print("██");
+            }
+            else if (grid[y][x] == 3){
+                Serial.print("🛑");
+            }
+
+            // barrier on an empty block, which is not legal
+            if ( (!isGridLine(y) && !isGridLine(x)) && grid[y][x] == 1){
+                graphSetupError = true;
+            } 
+
         }
         Serial.println();
     }
@@ -91,6 +131,11 @@ void setup()
 {
     Serial.begin(9600);
     visualize();
+
+    if (graphSetupError){
+        Serial.println("GRAPH SETUP ERROR. POSSIBLE ERRORS: ILLEGAL BARRIER SPOT.");
+        return;
+    }
 
     Serial.println("Started DFS");
     vii result = vii();
