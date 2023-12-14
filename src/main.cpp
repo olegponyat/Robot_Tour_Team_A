@@ -255,6 +255,8 @@ void setup()
 
     Serial.println("\n\n[Algorithm Summary]\n");
     Serial.println("Total Moves: " + String(moves));
+    Serial.println("Initializing car.");
+    car.init();
 
     float analogSpeed = calcSpeed(moves, targetTime);
     executePath(analogSpeed, secondsPerMove * 1000, points);
