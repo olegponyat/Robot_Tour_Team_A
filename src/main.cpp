@@ -3,6 +3,7 @@
 #include <speed.cpp>
 #include <vector.cpp> // custom array class
 #include <pair.cpp>
+#include <system.cpp>
 
 #define vii vector<pair<int, int>>
 #define pii pair<int, int>
@@ -56,6 +57,7 @@ Grid lines are odd numbers:
 - ex (for y): 1, 3, 5...
 - ex (for x): 1, 3, 5...
 */
+
 bool isGridLine(int index){
     return index%2 != 0;
 }
@@ -149,7 +151,11 @@ void turnRight(int repeats=1){
     car.stop();
 }
 
-void executePath(float analogSpeed, float msPerMove, vii points){
+void executePath(float analogSpeed, float msPerMove, vii &points){
+
+    Serial.println("Initiaing car.");
+    car.init();
+    Serial.println("Done.");
 
     Serial.println("Analog Speed: " + String(analogSpeed));
 
@@ -166,9 +172,11 @@ void executePath(float analogSpeed, float msPerMove, vii points){
         int turns = currentAngle / 90;
 
         if (debug_move){
-            Serial.println("[change (y,x)]( " + String(dy) + ", " + String(dx));
+            Serial.println("[change (y,x)]( " + String(dy) + ", " + String(dx) + ")");
         }
 
+        getFreeRAMSpace();
+        
         if (dy < 0){ // North (up)
             if (debug_move) Serial.println("Move North");
             if (prevChangeInY != true) turnRight(turns);
@@ -215,6 +223,7 @@ void executePath(float analogSpeed, float msPerMove, vii points){
 void setup()
 {
     Serial.begin(9600);
+    getFreeRAMSpace();
     visualize();
 
     if (graphSetupError){
@@ -223,42 +232,47 @@ void setup()
     }
 
     Serial.println("Started DFS");
-    vii result = vii();
-    dfs(start, result);
-    result.reverse(); // results are from goal to start, need to reverse
+    vii* result = new vii();
+    dfs(start, *result);
+    result->reverse(); // results are from goal to start, need to reverse
+    getFreeRAMSpace();
 
-    if (result.length() == 0) {
+    if (result->length() == 0) {
         Serial.println("No solution");
         return;
-    }
+    }else Serial.println("Found valid soluction");
 
     int moves = 0;
-    vii points;
+    vii points =  vii();
 
     Serial.println("\nSteps (y, x): ");
-    for (int i = 0; i < result.length(); i ++){
-        int y = result.get(i).first;
-        int x = result.get(i).second;
+    for (int i = 0; i < result->length(); i ++){
+        int y = result->get(i).first;
+        int x = result->get(i).second;
 
         if (isGridLine(y) || isGridLine(x)){
             Serial.print("[grid]( " + String(y) + ", " + String(x) + ") -> ");
         }else{
             Serial.print("[point]( " + String(y) + ", " + String(x) + ") -> ");
 
-            points.push_back(result.get(i));
+            points.push_back(result->get(i));
             moves++;
         }
 
     }
+    Serial.println();
+    delete result;
+    getFreeRAMSpace();
 
     float secondsPerMove = targetTime / (float) moves;
 
-    Serial.println("\n\n[Algorithm Summary]\n");
+    Serial.println("\n\n[Algorithm Summary]");
     Serial.println("Total Moves: " + String(moves));
-    Serial.println("Initializing car.");
-    car.init();
+    getFreeRAMSpace();
 
     float analogSpeed = calcSpeed(moves, targetTime);
+
+    getFreeRAMSpace();
     executePath(analogSpeed, secondsPerMove * 1000, points);
 
 }

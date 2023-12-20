@@ -2,10 +2,10 @@
 #include "DeviceDriverSet_xxx0.h"
 #include "ApplicationFunctionSet_xxx0.cpp"
 #include <Arduino.h>
+#include <system.cpp>
 DeviceDriverSet_Motor AppMotor;
 Application_xxx Application_ConquerorCarxxx0;
 MPU6050_getdata AppMPU6050getdata;
-ConquerorCarMotionControl status = Forward;
 
 class SmartCar
 {
@@ -14,14 +14,15 @@ private:
 public:
     void init()
     {
+        // Serial.begin(9600);
         Serial.println("Initiated SmartCar");
         AppMotor.DeviceDriverSet_Motor_Init();
-        Serial.println("Initiated Motor Driver");
+        getFreeRAMSpace();
         AppMPU6050getdata.MPU6050_dveInit();
-        Serial.println("Initiated MPU Driver");
-        delay(2000);
+        getFreeRAMSpace();
+        delay(1000);
         AppMPU6050getdata.MPU6050_calibration();
-        Serial.println("Done SmartCar");
+        getFreeRAMSpace();
     }
 
     void moveFoward(int speed)
