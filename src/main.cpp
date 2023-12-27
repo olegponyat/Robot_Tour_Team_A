@@ -9,7 +9,7 @@
 #define pii pair<int, int>
 
 /*SETTINGS*/
-const float targetTime = 30;
+const float targetTime = 20;
 const int maxn = 7; // grid size
 const pii start = pii(6, 0);
 
@@ -62,49 +62,42 @@ bool isGridLine(int index){
     return index%2 != 0;
 }
 
-void visualize(){
-    Serial.println("\n[VISUALIZATION]\n");
+// void visualize() {
+//     Serial.println(F("\n[VISUALIZATION]\n"));
 
-    Serial.println("🚩= start");
-    Serial.println("⭐ = end");
-    Serial.println("🛑 = intersection (impossible)");
-    Serial.println("░░ = grid line");
-    Serial.println("▒▒ = empty");
-    Serial.println("██ = barrier");
-    Serial.println();
-    for (int y = 0; y < maxn; y ++){
-        for (int x = 0; x < maxn; x ++){
+//     Serial.println(F("S = start, E = end, X = intersection, , = grid line, . = empty, # = barrier"));
+//     Serial.println();
+//     String line;
+//     for (byte y = 0; y < maxn; y++) {
+//         line = "";  // Reset line string for each row
+//         for (byte x = 0; x < maxn; x++) {
+//             if (y == start.first && x == start.second) { // start
+//                 line += "S";
+//             }
+//             else if (grid[y][x] == 2) { // end
+//                 line += "E";
+//             }
+//             else if ((isGridLine(y) || isGridLine(x)) && grid[y][x] == 0) { 
+//                 line += ",";
+//             }
+//             else if (grid[y][x] == 0) {
+//                 line += ".";
+//             }
+//             else if (grid[y][x] == 1) {
+//                 line += "#";
+//             }
+//             else if (grid[y][x] == 3) {
+//                 line += "X";
+//             }
 
-            if (y == start.first && x == start.second) { // start
-                Serial.print("🚩");
-            }
-            else if (grid[y][x] == 2) { // end
-                Serial.print("⭐");
-            }
-            // if it is a grid line, and it is empty. else it will be handled as barrier.
-            else if ( (isGridLine(y) || isGridLine(x)) && grid[y][x] == 0){ 
-                Serial.print("░░");
-            }
-            else if (grid[y][x] == 0) {
-                Serial.print("▒▒");
-            }
-            else if (grid[y][x] == 1) {
-                Serial.print("██");
-            }
-            else if (grid[y][x] == 3){
-                Serial.print("🛑");
-            }
-
-            // barrier on an empty block, which is not legal
-            if ( (!isGridLine(y) && !isGridLine(x)) && grid[y][x] == 1){
-                graphSetupError = true;
-            } 
-
-        }
-        Serial.println();
-    }
-    Serial.println();
-}
+//             if ((!isGridLine(y) && !isGridLine(x)) && grid[y][x] == 1) {
+//                 graphSetupError = true;
+//             } 
+//         }
+//         Serial.println(line);
+//     }
+//     Serial.println();
+// }
 
 bool dfs(pii coord, vii &paths){
 
@@ -129,7 +122,8 @@ bool dfs(pii coord, vii &paths){
         if ( nx >= 0 && nx < maxn && ny >= 0 && ny < maxn){
             bool is_solution = dfs(pii(ny, nx), paths);
             if (is_solution){
-                paths.push_back(pii(ny, nx));
+                // only if it isnt a grid line we count it as a move
+                if (!isGridLine(ny) && !isGridLine(nx)) paths.push_back(pii(ny, nx));
                 return true;
             } else{
                 paths.clear();
@@ -156,8 +150,7 @@ void executePath(float analogSpeed, float msPerMove, vii &points){
     Serial.println("Analog Speed: " + String(analogSpeed));
 
     pii currentPoint = start;
-    int currentAngle = 0;
-    bool prevChangeInY = true;
+    int dir = 0; //  0 = N, 1 = E, 2 = S , 3 = W
 
     for (int i = 0; i < points.length(); i ++){
 
@@ -165,52 +158,64 @@ void executePath(float analogSpeed, float msPerMove, vii &points){
 
         int dy = nextPos.first - currentPoint.first;
         int dx = nextPos.second - currentPoint.second;
-        int turns = currentAngle / 90;
 
         if (debug_move){
             Serial.println("[change (y,x)]( " + String(dy) + ", " + String(dx) + ")");
         }
-
-        getFreeRAMSpace();
         
         if (dy < 0){ // North (up)
             if (debug_move) Serial.println("Move North");
-            if (prevChangeInY != true) turnRight(turns);
+            
+            if (dir == 1) car.turnLeft(analogSpeed);
+            else if (dir == 2) car.turnRight(analogSpeed);
+
+            dir = 0;
+
             car.moveFoward(analogSpeed);
             delay(msPerMove);
-            prevChangeInY = true;
         }
         else if (dy > 0){ // South (down)
             if (debug_move) Serial.println("Move South");
-            if (prevChangeInY != true) turnRight(turns);
-            car.moveFoward(analogSpeed);
+
+            if (dir == 1) car.turnLeft(analogSpeed);
+            else if (dir == 2) car.turnRight(analogSpeed); 
+
+            dir = 0;       
+
+            car.moveBackward(analogSpeed);
             delay(msPerMove);
-            prevChangeInY = true;
         }
         else if (dx > 0){ // East (right)
             if (debug_move) Serial.println("Move East");
-            if (prevChangeInY != false) {
-                turnRight(1);
+        
+            if (dir == 0) car.turnRight(analogSpeed);
+            else if (dir == 2) {
+                car.turnRight(analogSpeed);
+                car.turnRight(analogSpeed);
             }
-            currentAngle += 90;
+
+            dir = 1;
+
             car.moveFoward(analogSpeed);
             delay(msPerMove);
-            prevChangeInY = false;
         }
         else if (dx < 0){ // West (left)
             if (debug_move) Serial.println("Move West");
-            if (prevChangeInY != false) {
-                turnRight(3);
+            
+            if (dir == 0) car.turnLeft(analogSpeed);
+            else if (dir == 1) {
+                car.turnLeft(analogSpeed);
+                car.turnLeft(analogSpeed);
             }
-            currentAngle -= 90;
+
+            dir = 2;
+
             car.moveFoward(analogSpeed);
             delay(msPerMove);
-            prevChangeInY = false;
         }
 
         car.stop();
 
-        currentAngle = 0;
         currentPoint = nextPos;
     }
 
@@ -220,62 +225,38 @@ void setup()
 {
     Serial.begin(9600);
     getFreeRAMSpace();
-    Serial.println("Initiaing car.");
+    // visualize();
+
+    if (graphSetupError){
+        Serial.println("GRAPH SETUP ERROR. POSSIBLE ERRORS: ILLEGAL BARRIER SPOT.");
+        return;
+    }
+
+    Serial.println("Started DFS");
+    vii* result = new vii();
+    dfs(start, *result);
+    result->reverse(); // results are from goal to start, need to reverse
+    getFreeRAMSpace();
+
+    if (result->length() == 0) {
+        Serial.println("No solution");
+        return;
+    }else Serial.println("Found valid solution");
+
+    int moves = result->length();
+    float analogSpeed = calcSpeed(moves, targetTime);
+    float secondsPerMove = targetTime / (float) moves;
+
+    Serial.println("\n\n[Algorithm Summary]");
+    Serial.println("Total Moves: " + String(moves));
+    Serial.println("Analog Speed: " + String(analogSpeed));
+    Serial.println("Seconds Per Move: " + String(secondsPerMove));
+
+    getFreeRAMSpace();
+    Serial.print("Initiating car...");
     car.init();
-    Serial.println("Done.");
-    visualize();
-
-    // if (graphSetupError){
-    //     Serial.println("GRAPH SETUP ERROR. POSSIBLE ERRORS: ILLEGAL BARRIER SPOT.");
-    //     return;
-    // }
-
-    // Serial.println("Started DFS");
-    // vii* result = new vii();
-    // dfs(start, *result);
-    // result->reverse(); // results are from goal to start, need to reverse
-    // getFreeRAMSpace();
-
-    // if (result->length() == 0) {
-    //     Serial.println("No solution");
-    //     return;
-    // }else Serial.println("Found valid soluction");
-
-    // int moves = 0;
-    // vii points =  vii();
-
-    // Serial.println("\nSteps (y, x): ");
-    // for (int i = 0; i < result->length(); i ++){
-    //     int y = result->get(i).first;
-    //     int x = result->get(i).second;
-
-    //     if (isGridLine(y) || isGridLine(x)){
-    //         Serial.print("[grid]( " + String(y) + ", " + String(x) + ") -> ");
-    //     }else{
-    //         Serial.print("[point]( " + String(y) + ", " + String(x) + ") -> ");
-
-    //         points.push_back(result->get(i));
-    //         moves++;
-    //     }
-
-    // }
-    // Serial.println();
-    // delete result;
-    // getFreeRAMSpace();
-
-    // float secondsPerMove = targetTime / (float) moves;
-
-    // Serial.println("\n\n[Algorithm Summary]");
-    // Serial.println("Total Moves: " + String(moves));
-    // getFreeRAMSpace();
-
-    // float analogSpeed = calcSpeed(moves, targetTime);
-
-    // getFreeRAMSpace();
-    // executePath(analogSpeed, secondsPerMove * 1000, points);
-
+    Serial.println("Successfully initiated car");
+    executePath(analogSpeed, secondsPerMove * 1000, *result);
 }
 
-void loop()
-{
-}
+void loop(){}
