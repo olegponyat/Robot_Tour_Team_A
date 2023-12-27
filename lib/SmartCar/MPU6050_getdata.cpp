@@ -56,7 +56,7 @@ bool MPU6050_getdata::MPU6050_dveInit(void)
 }
 bool MPU6050_getdata::MPU6050_calibration(void)
 {
-  unsigned short times = 100; //采样次数
+  unsigned short times = 1000; //采样次数
   for (int i = 0; i < times; i++)
   {
     gz = accelgyro.getRotationZ();

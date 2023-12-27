@@ -9,7 +9,7 @@
 #define pii pair<int, int>
 
 /*SETTINGS*/
-const float targetTime = 20;
+const float targetTime = 30;
 const int maxn = 7; // grid size
 const pii start = pii(6, 0);
 
@@ -135,16 +135,6 @@ bool dfs(pii coord, vii &paths){
 
 }
 
-void turnRight(int repeats=1){
-    for (int i = 0; i < repeats; i ++){
-        car.moveRight(100);
-        delay(500);
-        car.stop();
-        delay(200);
-    }
-    car.stop();
-}
-
 void executePath(float analogSpeed, float msPerMove, vii &points){
 
     Serial.println("Analog Speed: " + String(analogSpeed));
@@ -214,9 +204,8 @@ void executePath(float analogSpeed, float msPerMove, vii &points){
             delay(msPerMove);
         }
 
-        car.stop();
-
         currentPoint = nextPos;
+        car.stop();
     }
 
 }
