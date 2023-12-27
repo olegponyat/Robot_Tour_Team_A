@@ -153,10 +153,6 @@ void turnRight(int repeats=1){
 
 void executePath(float analogSpeed, float msPerMove, vii &points){
 
-    Serial.println("Initiaing car.");
-    car.init();
-    Serial.println("Done.");
-
     Serial.println("Analog Speed: " + String(analogSpeed));
 
     pii currentPoint = start;
@@ -224,56 +220,59 @@ void setup()
 {
     Serial.begin(9600);
     getFreeRAMSpace();
+    Serial.println("Initiaing car.");
+    car.init();
+    Serial.println("Done.");
     visualize();
 
-    if (graphSetupError){
-        Serial.println("GRAPH SETUP ERROR. POSSIBLE ERRORS: ILLEGAL BARRIER SPOT.");
-        return;
-    }
+    // if (graphSetupError){
+    //     Serial.println("GRAPH SETUP ERROR. POSSIBLE ERRORS: ILLEGAL BARRIER SPOT.");
+    //     return;
+    // }
 
-    Serial.println("Started DFS");
-    vii* result = new vii();
-    dfs(start, *result);
-    result->reverse(); // results are from goal to start, need to reverse
-    getFreeRAMSpace();
+    // Serial.println("Started DFS");
+    // vii* result = new vii();
+    // dfs(start, *result);
+    // result->reverse(); // results are from goal to start, need to reverse
+    // getFreeRAMSpace();
 
-    if (result->length() == 0) {
-        Serial.println("No solution");
-        return;
-    }else Serial.println("Found valid soluction");
+    // if (result->length() == 0) {
+    //     Serial.println("No solution");
+    //     return;
+    // }else Serial.println("Found valid soluction");
 
-    int moves = 0;
-    vii points =  vii();
+    // int moves = 0;
+    // vii points =  vii();
 
-    Serial.println("\nSteps (y, x): ");
-    for (int i = 0; i < result->length(); i ++){
-        int y = result->get(i).first;
-        int x = result->get(i).second;
+    // Serial.println("\nSteps (y, x): ");
+    // for (int i = 0; i < result->length(); i ++){
+    //     int y = result->get(i).first;
+    //     int x = result->get(i).second;
 
-        if (isGridLine(y) || isGridLine(x)){
-            Serial.print("[grid]( " + String(y) + ", " + String(x) + ") -> ");
-        }else{
-            Serial.print("[point]( " + String(y) + ", " + String(x) + ") -> ");
+    //     if (isGridLine(y) || isGridLine(x)){
+    //         Serial.print("[grid]( " + String(y) + ", " + String(x) + ") -> ");
+    //     }else{
+    //         Serial.print("[point]( " + String(y) + ", " + String(x) + ") -> ");
 
-            points.push_back(result->get(i));
-            moves++;
-        }
+    //         points.push_back(result->get(i));
+    //         moves++;
+    //     }
 
-    }
-    Serial.println();
-    delete result;
-    getFreeRAMSpace();
+    // }
+    // Serial.println();
+    // delete result;
+    // getFreeRAMSpace();
 
-    float secondsPerMove = targetTime / (float) moves;
+    // float secondsPerMove = targetTime / (float) moves;
 
-    Serial.println("\n\n[Algorithm Summary]");
-    Serial.println("Total Moves: " + String(moves));
-    getFreeRAMSpace();
+    // Serial.println("\n\n[Algorithm Summary]");
+    // Serial.println("Total Moves: " + String(moves));
+    // getFreeRAMSpace();
 
-    float analogSpeed = calcSpeed(moves, targetTime);
+    // float analogSpeed = calcSpeed(moves, targetTime);
 
-    getFreeRAMSpace();
-    executePath(analogSpeed, secondsPerMove * 1000, points);
+    // getFreeRAMSpace();
+    // executePath(analogSpeed, secondsPerMove * 1000, points);
 
 }
 
