@@ -9,9 +9,9 @@
 #define pii pair<int, int>
 
 /*SETTINGS*/
-const float targetTime = 30;
+const float targetTime = 20;
 const int maxn = 7; // grid size
-const pii start = pii(6, 0);
+const pii start = pii(6, 6);
 
 /*DEBUG*/
 bool debug_move = true;
@@ -35,20 +35,22 @@ W = towards x = 0
 */
 
 //   s  l     l     l
-    {2, 0, 0, 1, 0, 0, 0},
-    {0, 3, 0, 3, 0, 3, 0}, // <- l
-    {0, 0, 0, 1, 0, 0, 0},
-    {0, 3, 1, 3, 1, 3, 1}, // <- l
     {0, 0, 0, 0, 0, 0, 0},
-    {1, 3, 1, 3, 1, 3, 0}, // <- l
+    {0, 3, 0, 3, 0, 3, 0}, // <- l
+    {0, 0, 2, 0, 0, 0, 0},
+    {0, 3, 0, 3, 0, 3, 0}, // <- l
+    {0, 0, 0, 0, 0, 0, 0},
+    {0, 3, 0, 3, 0, 3, 0}, // <- l
     {0, 0, 0, 0, 0, 0, 0}
 
 };
 
 bool graphSetupError = false;
 bool vis[maxn][maxn];
-int dx[4] = {1, -1, 0, 0};
-int dy[4] = {0, 0, 1, -1};
+int dx[4] = {2, -2, 0, 0};
+int dy[4] = {0, 0, 2, -2};
+int gx[4] = {1, -1, 0, 0};
+int gy[4] = {0, 0, 1, -1};
 
 SmartCar car;
 
@@ -118,12 +120,16 @@ bool dfs(pii coord, vii &paths){
     for (int i = 0; i < 4; i ++){
         int ny = y + dy[i];
         int nx = x + dx[i];
+        int ngy = y + gy[i];
+        int ngx = x + gx[i];
 
         if ( nx >= 0 && nx < maxn && ny >= 0 && ny < maxn){
+            if (grid[ngy][ngx] != 0) continue;
             bool is_solution = dfs(pii(ny, nx), paths);
             if (is_solution){
                 // only if it isnt a grid line we count it as a move
-                if (!isGridLine(ny) && !isGridLine(nx)) paths.push_back(pii(ny, nx));
+                if (debug_move) Serial.println("Move (y, x): " + String(ny) + ", " + String(nx));
+                paths.push_back(pii(ny, nx));
                 return true;
             } else{
                 paths.clear();
@@ -161,8 +167,9 @@ void executePath(float analogSpeed, float msPerMove, vii &points){
 
             dir = 0;
 
-            car.moveFoward(analogSpeed);
+            car.moveForward(analogSpeed);
             delay(msPerMove);
+            car.adjust(analogSpeed);
         }
         else if (dy > 0){ // South (down)
             if (debug_move) Serial.println("Move South");
@@ -174,6 +181,7 @@ void executePath(float analogSpeed, float msPerMove, vii &points){
 
             car.moveBackward(analogSpeed);
             delay(msPerMove);
+            car.adjust(analogSpeed);
         }
         else if (dx > 0){ // East (right)
             if (debug_move) Serial.println("Move East");
@@ -186,7 +194,7 @@ void executePath(float analogSpeed, float msPerMove, vii &points){
 
             dir = 1;
 
-            car.moveFoward(analogSpeed);
+            car.moveForward(analogSpeed);
             delay(msPerMove);
         }
         else if (dx < 0){ // West (left)
@@ -200,11 +208,12 @@ void executePath(float analogSpeed, float msPerMove, vii &points){
 
             dir = 2;
 
-            car.moveFoward(analogSpeed);
+            car.moveForward(analogSpeed);
             delay(msPerMove);
         }
 
         currentPoint = nextPos;
+        // car.adjust(analogSpeed);
         car.stop();
     }
 
@@ -246,6 +255,33 @@ void setup()
     car.init();
     Serial.println("Successfully initiated car");
     executePath(analogSpeed, secondsPerMove * 1000, *result);
+
+    // // DEBUG BLOCK GYRO
+    // car.init();
+    // while (true){
+    //     AppMPU6050getdata.MPU6050_dveGetEulerAngles(&Yaw);
+    //     Serial.println("Current Yaw: " + String(Yaw));
+    // }
+
+    // car.init();
+    // while(true){
+    //     car.moveForward(50);
+    //     delay(2000);
+    //     car.turnLeft(50);
+    // }
+    // while (true){
+    //     while (!Serial.available()) {}; Serial.read();
+    //     car.moveForward(50);
+    //     delay(1000); car.stop(); car.printAngle();
+    //     while (!Serial.available()) {}; Serial.read();
+    //     car.moveBackward(50);
+    //     delay(1000); car.stop(); car.printAngle();
+    //     while (!Serial.available()) {}; Serial.read();
+    //     car.turnLeft(90);
+    //     delay(1000); car.stop(); car.printAngle();
+    //     while (!Serial.available()) {}; Serial.read();
+    //     car.adjust(40); car.printAngle();
+    // }
 }
 
 void loop(){}

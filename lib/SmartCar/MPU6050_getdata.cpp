@@ -56,14 +56,14 @@ bool MPU6050_getdata::MPU6050_dveInit(void)
 }
 bool MPU6050_getdata::MPU6050_calibration(void)
 {
-  unsigned short times = 1000; //采样次数
+  unsigned short times = 100; //采样次数
   for (int i = 0; i < times; i++)
   {
     gz = accelgyro.getRotationZ();
     gzo += gz;
+    delay(2); // Small delay for stable readings
   }
   gzo /= times; //计算陀螺仪偏移
-
   // gzo = accelgyro.getRotationZ();
   return false;
 }
@@ -74,11 +74,15 @@ bool MPU6050_getdata::MPU6050_dveGetEulerAngles(float *Yaw)
   lastTime = now;                 //上一次采样时间(ms)
   gz = accelgyro.getRotationZ();
   float gyroz = -(gz - gzo) / 131.0 * dt; //z轴角速度
-  if (fabs(gyroz) < 0.05)
+  if (fabs(gyroz) < 0.02)
   {
     gyroz = 0.00;
   }
   agz += gyroz; //z轴角速度积分
   *Yaw = agz;
   return false;
+}
+
+void MPU6050_getdata::resetYawAtIntervals() {
+  MPU6050Getdata.agz = 0; // Reset the integrated yaw angle
 }
