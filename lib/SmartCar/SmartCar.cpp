@@ -132,7 +132,7 @@ public:
         this->adjust(speed);
     }
 
-    void adjust(int speed){
+    void  adjust(int speed){
         
         this->stop();
         AppMPU6050getdata.MPU6050_dveGetEulerAngles(&Yaw);

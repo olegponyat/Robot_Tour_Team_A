@@ -36,12 +36,12 @@ W = towards x = 0
 
 //   s  l     l     l
     {0, 0, 0, 0, 0, 0, 0},
+    {0, 3, 1, 3, 1, 3, 0}, // <- l
+    {0, 1, 0, 0, 0, 1, 0},
     {0, 3, 0, 3, 0, 3, 0}, // <- l
-    {0, 0, 2, 0, 0, 0, 0},
-    {0, 3, 0, 3, 0, 3, 0}, // <- l
-    {0, 0, 0, 0, 0, 0, 0},
-    {0, 3, 0, 3, 0, 3, 0}, // <- l
-    {0, 0, 0, 0, 0, 0, 0}
+    {0, 1, 2, 1, 0, 1, 0},
+    {0, 3, 1, 3, 0, 3, 0}, // <- l
+    {0, 0, 0, 0, 0, 1, 0}
 
 };
 
@@ -269,18 +269,14 @@ void setup()
     //     delay(2000);
     //     car.turnLeft(50);
     // }
+    // car.init();
     // while (true){
-    //     while (!Serial.available()) {}; Serial.read();
-    //     car.moveForward(50);
-    //     delay(1000); car.stop(); car.printAngle();
-    //     while (!Serial.available()) {}; Serial.read();
-    //     car.moveBackward(50);
-    //     delay(1000); car.stop(); car.printAngle();
-    //     while (!Serial.available()) {}; Serial.read();
-    //     car.turnLeft(90);
-    //     delay(1000); car.stop(); car.printAngle();
-    //     while (!Serial.available()) {}; Serial.read();
-    //     car.adjust(40); car.printAngle();
+    //     for (int i = 0 ; i < 10; i ++){
+    //         car.turnRight(150);
+    //         delay(1000);
+    //     }
+    //     car.adjust(150);
+    //     delay(1000);
     // }
 }
 
