@@ -60,10 +60,16 @@ bool MPU6050_getdata::MPU6050_calibration(void)
   for (int i = 0; i < times; i++)
   {
     gz = accelgyro.getRotationZ();
+    vx = accelgyro.getAccelerationX();
+    vy = accelgyro.getAccelerationY();
     gzo += gz;
+    vxo += vx;
+    vyo += vy;
     delay(2); // Small delay for stable readings
   }
   gzo /= times; //计算陀螺仪偏移
+  vxo /= times;
+  vyo /= times;
   // gzo = accelgyro.getRotationZ();
   return false;
 }
@@ -83,6 +89,41 @@ bool MPU6050_getdata::MPU6050_dveGetEulerAngles(float *Yaw)
   return false;
 }
 
+bool MPU6050_getdata::MPU6050_getDistance(float *Distance){
+  unsigned long now_dist = millis();
+  vdt = (now_dist - lastTime_dist) / 1000.0;
+  lastTime_dist = now_dist;
+
+  // Store previous velocities
+  float prev_avx = avx;
+  float prev_avy = avy;
+
+  // Update velocities
+  avx += (accelgyro.getAccelerationX() - vxo) * vdt;
+  avy += (accelgyro.getAccelerationY() - vyo) * vdt;
+
+  // Calculate average velocity for the interval
+  float avg_vel_x = (avx + prev_avx) / 2;
+  float avg_vel_y = (avy + prev_avy) / 2;
+
+  // Calculate incremental distance
+  float distX = avg_vel_x * vdt;
+  float distY = avg_vel_y * vdt;
+
+  // Update total distance
+  static float totalDistance = 0;
+  totalDistance += sqrt(pow(distX, 2) + pow(distY, 2));
+
+  *Distance = totalDistance;
+
+  return true;
+}
+
 void MPU6050_getdata::resetYawAtIntervals() {
   MPU6050Getdata.agz = 0; // Reset the integrated yaw angle
+}
+
+void MPU6050_getdata::resetDistance() {
+  MPU6050Getdata.avx = 0;
+  MPU6050Getdata.avy = 0;
 }

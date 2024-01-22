@@ -87,6 +87,14 @@ public:
         );
     }
 
+    void moveForwardDistance(int speed, float distanceInCM){
+        this->moveForward(speed);
+        AppMPU6050getdata.resetDistance();
+        AppMPU6050getdata.MPU6050_getDistance(&Dist);
+        while (Dist < distanceInCM){}
+        this->stop();
+    }
+
     void moveBackward(int speed)
     {
         this->stop();
@@ -132,7 +140,7 @@ public:
         this->adjust(speed);
     }
 
-    void  adjust(int speed){
+    void adjust(int speed){
         
         this->stop();
         AppMPU6050getdata.MPU6050_dveGetEulerAngles(&Yaw);
