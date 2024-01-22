@@ -1,17 +1,21 @@
 #include <Arduino.h>
 #include <SmartCar.cpp>
 #include <speed.cpp>
-#include <vector.cpp> // custom array class
-#include <pair.cpp>
 #include <system.cpp>
+// #include <pair.cpp>
+#include <StandardCplusplus.h>
+#include <map>
+#include <queue>
+#include <vector>
 
-#define vii vector<pair<int, int>>
-#define pii pair<int, int>
+typedef std::pair<int, int> pii;
+typedef std::vector<pii> vii;
 
 /*SETTINGS*/
 const float targetTime = 20;
 const int maxn = 7; // grid size
-const pii start = pii(6, 6);
+const pii start = pii(0, 6);
+const int gridSize = 4;
 
 /*DEBUG*/
 bool debug_move = true;
@@ -26,6 +30,7 @@ int grid[maxn][maxn] = {
 s = start, l = grid line
 0 = grid, 1 = barrier, 2 = goal,
 3 = intersection (impossible to get to, intersection between grid lines)
+4 = bonus points
 
 Directions:
 N,E,S,W
@@ -36,12 +41,12 @@ W = towards x = 0
 
 //   s  l     l     l
     {0, 0, 0, 0, 0, 0, 0},
-    {0, 3, 1, 3, 1, 3, 0}, // <- l
-    {0, 1, 0, 0, 0, 1, 0},
     {0, 3, 0, 3, 0, 3, 0}, // <- l
-    {0, 1, 2, 1, 0, 1, 0},
-    {0, 3, 1, 3, 0, 3, 0}, // <- l
-    {0, 0, 0, 0, 0, 1, 0}
+    {0, 0, 0, 0, 0, 0, 0},
+    {0, 3, 0, 3, 0, 3, 0}, // <- l
+    {0, 0, 0, 0, 0, 0, 0},
+    {0, 3, 0, 3, 0, 3, 0}, // <- l
+    {0, 0, 0, 0, 0, 0, 0}
 
 };
 
@@ -60,85 +65,56 @@ Grid lines are odd numbers:
 - ex (for x): 1, 3, 5...
 */
 
-bool isGridLine(int index){
-    return index%2 != 0;
+void clearVis(){
+    for (int i = 0; i < gridSize; i ++)
+        for (int j = 0; j < gridSize; j ++)
+            vis[i][j] = false;
 }
 
-// void visualize() {
-//     Serial.println(F("\n[VISUALIZATION]\n"));
-
-//     Serial.println(F("S = start, E = end, X = intersection, , = grid line, . = empty, # = barrier"));
-//     Serial.println();
-//     String line;
-//     for (byte y = 0; y < maxn; y++) {
-//         line = "";  // Reset line string for each row
-//         for (byte x = 0; x < maxn; x++) {
-//             if (y == start.first && x == start.second) { // start
-//                 line += "S";
-//             }
-//             else if (grid[y][x] == 2) { // end
-//                 line += "E";
-//             }
-//             else if ((isGridLine(y) || isGridLine(x)) && grid[y][x] == 0) { 
-//                 line += ",";
-//             }
-//             else if (grid[y][x] == 0) {
-//                 line += ".";
-//             }
-//             else if (grid[y][x] == 1) {
-//                 line += "#";
-//             }
-//             else if (grid[y][x] == 3) {
-//                 line += "X";
-//             }
-
-//             if ((!isGridLine(y) && !isGridLine(x)) && grid[y][x] == 1) {
-//                 graphSetupError = true;
-//             } 
-//         }
-//         Serial.println(line);
-//     }
-//     Serial.println();
-// }
-
-bool dfs(pii coord, vii &paths){
-
-    int y = coord.first;
-    int x = coord.second;
-
-    if (vis[y][x]) return false;
-    if (grid[y][x] == 1 || grid[y][x] == 3) return false; // barrier or impossible
-    vis[y][x] = true;
-
-    if (grid[y][x] == 2) {
-        Serial.println("Found goal at: ( x: " + String(x) + ", y: " + String(y) + ")");
-        if (paths.length() == 0){
-            return true;
+vii BFS(pii start, bool &solved){
+    clearVis();
+    std::queue<pii> q;
+    std::map<pii, pii> parent;
+    
+    vis[start.first][start.second] = true;
+    q.push(start);
+    
+    while (!q.empty()){
+        pii current = q.front(); q.pop();
+        int y = current.first, x = current.second;
+        vis[y][x] = true;
+        
+        if (grid[y][x] == 4 || grid[y][x] == 2){
+            if (grid[y][x] == 2) solved = true;
+            vii path;
+            while (current != start){
+                path.push_back(current);
+                current = parent[current];
+            }
+            path.push_back(start);
+            reverse(path.begin(), path.end());
+            return path;
         }
-    }
-
-    for (int i = 0; i < 4; i ++){
-        int ny = y + dy[i];
-        int nx = x + dx[i];
-        int ngy = y + gy[i];
-        int ngx = x + gx[i];
-
-        if ( nx >= 0 && nx < maxn && ny >= 0 && ny < maxn){
-            if (grid[ngy][ngx] != 0) continue;
-            bool is_solution = dfs(pii(ny, nx), paths);
-            if (is_solution){
-                // only if it isnt a grid line we count it as a move
-                if (debug_move) Serial.println("Move (y, x): " + String(ny) + ", " + String(nx));
-                paths.push_back(pii(ny, nx));
-                return true;
-            } else{
-                paths.clear();
+        
+        for (int i = 0 ; i < 4; i ++){
+            int ny = y + dy[i];
+            int nx = x + dx[i];
+            int ngy = y + gy[i];
+            int ngx = x + gx[i];
+            
+            if ( nx >= 0 && nx < maxn && ny >= 0 && ny < maxn){
+                if (grid[ngy][ngx] != 0) continue;
+                if (vis[ny][nx]) continue;
+                pii neighbor = std::make_pair(ny, nx);
+                vis[ny][nx] = true;
+                parent[neighbor] = current;
+                q.push(neighbor);
             }
         }
+        
     }
-
-    return false;
-
+    
+    return vii();
 }
 
 void executePath(float analogSpeed, float msPerMove, vii &points){
@@ -148,9 +124,9 @@ void executePath(float analogSpeed, float msPerMove, vii &points){
     pii currentPoint = start;
     int dir = 0; //  0 = N, 1 = E, 2 = S , 3 = W
 
-    for (int i = 0; i < points.length(); i ++){
+    for (size_t i = 0; i < points.size(); i ++){
 
-        pii nextPos = points.get(i);
+        pii nextPos = points[i];
 
         int dy = nextPos.first - currentPoint.first;
         int dx = nextPos.second - currentPoint.second;
@@ -230,18 +206,40 @@ void setup()
         return;
     }
 
-    Serial.println("Started DFS");
-    vii* result = new vii();
-    dfs(start, *result);
-    result->reverse(); // results are from goal to start, need to reverse
-    getFreeRAMSpace();
+    Serial.println("Started BFS");
 
-    if (result->length() == 0) {
-        Serial.println("No solution");
-        return;
-    }else Serial.println("Found valid solution");
+    bool reachedGoal = false;
+    vii result;
+    
+    pii nextStart = start;
+    
+    while (!reachedGoal){
+        vii path = BFS(nextStart, reachedGoal);
+        
+        if (path.size() == 0){
+            Serial.println("NO SOLUTION");
+            return;
+        }
+        
+        nextStart = path[path.size()-1];
+        result.insert(result.end(), path.begin(), path.end() - 1); 
+            // path.end() - 1 prevents adding a repeated point, bc the current endpoint is the new startpoint        
+            
+        if (reachedGoal) result.push_back(nextStart); // adds back the endpoint if it is solution
+        
+        grid[nextStart.first][nextStart.second] = 0; // removes the bonus points 
+    }
 
-    int moves = result->length();
+    Serial.println("Found valid solution");
+
+    if (debug_move){
+        for (size_t i = 0; i < result.size(); i ++){
+            Serial.print("(" + String(result[i].first) + "," + String(result[i].second) + ") => ");
+        }
+        Serial.println();
+    }
+
+    int moves = result.size();
     float analogSpeed = calcSpeed(moves, targetTime);
     float secondsPerMove = targetTime / (float) moves;
 
@@ -254,30 +252,14 @@ void setup()
     Serial.print("Initiating car...");
     car.init();
     Serial.println("Successfully initiated car");
-    executePath(analogSpeed, secondsPerMove * 1000, *result);
 
-    // // DEBUG BLOCK GYRO
-    // car.init();
-    // while (true){
-    //     AppMPU6050getdata.MPU6050_dveGetEulerAngles(&Yaw);
-    //     Serial.println("Current Yaw: " + String(Yaw));
-    // }
+    // Initial drive into the maze
+    car.moveForward(analogSpeed);
+    delay(secondsPerMove * 1000);
+    car.stop();
 
-    // car.init();
-    // while(true){
-    //     car.moveForward(50);
-    //     delay(2000);
-    //     car.turnLeft(50);
-    // }
-    // car.init();
-    // while (true){
-    //     for (int i = 0 ; i < 10; i ++){
-    //         car.turnRight(150);
-    //         delay(1000);
-    //     }
-    //     car.adjust(150);
-    //     delay(1000);
-    // }
+    executePath(analogSpeed, secondsPerMove * 1000, result);
+
 }
 
 void loop(){}
