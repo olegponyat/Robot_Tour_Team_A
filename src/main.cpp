@@ -12,10 +12,9 @@ typedef std::pair<int, int> pii;
 typedef std::vector<pii> vii;
 
 /*SETTINGS*/
-const float targetTime = 20;
+const float targetTime = 30;
 const int maxn = 7; // grid size
-const pii start = pii(0, 6);
-const int gridSize = 4;
+const pii start = pii(6, 0); // y, x
 
 /*DEBUG*/
 bool debug_move = true;
@@ -40,12 +39,12 @@ W = towards x = 0
 */
 
 //   s  l     l     l
-    {0, 0, 0, 0, 0, 0, 0},
-    {0, 3, 0, 3, 0, 3, 0}, // <- l
-    {0, 0, 0, 0, 0, 0, 0},
-    {0, 3, 0, 3, 0, 3, 0}, // <- l
-    {0, 0, 0, 0, 0, 0, 0},
-    {0, 3, 0, 3, 0, 3, 0}, // <- l
+    {0, 0, 0, 0, 0, 0, 2},
+    {0, 3, 0, 3, 1, 3, 1}, // <- l
+    {0, 0, 4, 1, 0, 0, 0},
+    {0, 3, 1, 3, 0, 3, 0}, // <- l
+    {0, 0, 0, 0, 0, 1, 4},
+    {1, 3, 1, 3, 0, 3, 1}, // <- l
     {0, 0, 0, 0, 0, 0, 0}
 
 };
@@ -66,8 +65,8 @@ Grid lines are odd numbers:
 */
 
 void clearVis(){
-    for (int i = 0; i < gridSize; i ++)
-        for (int j = 0; j < gridSize; j ++)
+    for (int i = 0; i < maxn; i ++)
+        for (int j = 0; j < maxn; j ++)
             vis[i][j] = false;
 }
 
