@@ -2,7 +2,6 @@
 #include "MPU6050_getdata.h"
 
 static float Yaw; // 偏航
-static float Dist;
 static float yaw_So = 0;
 
 extern DeviceDriverSet_Motor AppMotor;

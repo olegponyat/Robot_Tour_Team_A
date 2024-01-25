@@ -8,7 +8,7 @@ Application_xxx Application_ConquerorCarxxx0;
 MPU6050_getdata AppMPU6050getdata;
 
 bool debug = false;
-const float adjust_threshold = 5.0;
+const float adjust_threshold = 2.0;
 const int lowest_speed = 40;
 
 class SmartCar
@@ -38,13 +38,6 @@ private:
         return round(number / 90.0f) * 90.0f;
     }
 
-    void recarlibrate(){
-        this->stop();
-        AppMPU6050getdata.MPU6050_calibration();
-        this->updateYawReference();
-    }
-
-
     void turnTillTarget(int speed, float target, bool turnLeft, bool (*condition)(float yaw, float target)){
         updateYawReference();
         AppMPU6050getdata.MPU6050_dveGetEulerAngles(&Yaw);
@@ -71,6 +64,12 @@ public:
         AppMPU6050getdata.MPU6050_calibration();
     }
 
+    void recalibrate(){
+        this->stop();
+        AppMPU6050getdata.MPU6050_calibration();
+        this->updateYawReference();
+    }
+
     void printAngle(){
         AppMPU6050getdata.MPU6050_dveGetEulerAngles(&Yaw);
         Serial.println("Current Angle: " + String(Yaw));
@@ -87,11 +86,31 @@ public:
         );
     }
 
-    void moveForwardDistance(int speed, float distanceInCM){
-        this->moveForward(speed);
+    void moveForwardDistance(int speed, float distanceInM){
+        this->stop();
+        delay(100);
         AppMPU6050getdata.resetDistance();
-        AppMPU6050getdata.MPU6050_getDistance(&Dist);
-        while (Dist < distanceInCM){}
+        float distance = 0;
+        delay(100);
+        this->moveForward(speed);
+        while (distance < distanceInM){
+            distance = AppMPU6050getdata.MPU6050_getDistance();
+            Serial.println("Distance traveled: " + String(distance) + "m");
+        }
+        this->stop();
+    }
+
+    void moveBackwardDistance(int speed, float distanceInM){
+        this->stop();
+        delay(100);
+        AppMPU6050getdata.resetDistance();
+        float distance = 0;
+        delay(100);
+        this->moveBackward(speed);
+        while (distance < distanceInM){
+            distance = AppMPU6050getdata.MPU6050_getDistance();
+            Serial.println("Distance traveled: " + String(distance) + "m");
+        }
         this->stop();
     }
 

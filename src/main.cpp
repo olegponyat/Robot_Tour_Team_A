@@ -15,6 +15,7 @@ typedef std::vector<pii> vii;
 const float targetTime = 30;
 const int maxn = 7; // grid size
 const pii start = pii(6, 0); // y, x
+const float moveDistance = 0.55; // in meters
 
 /*DEBUG*/
 bool debug_move = true;
@@ -142,8 +143,7 @@ void executePath(float analogSpeed, float msPerMove, vii &points){
 
             dir = 0;
 
-            car.moveForward(analogSpeed);
-            delay(msPerMove);
+            car.moveForwardDistance(analogSpeed, moveDistance);
             car.adjust(analogSpeed);
         }
         else if (dy > 0){ // South (down)
@@ -154,8 +154,7 @@ void executePath(float analogSpeed, float msPerMove, vii &points){
 
             dir = 0;       
 
-            car.moveBackward(analogSpeed);
-            delay(msPerMove);
+            car.moveBackwardDistance(analogSpeed, moveDistance);
             car.adjust(analogSpeed);
         }
         else if (dx > 0){ // East (right)
@@ -169,7 +168,7 @@ void executePath(float analogSpeed, float msPerMove, vii &points){
 
             dir = 1;
 
-            car.moveForward(analogSpeed);
+            car.moveForwardDistance(analogSpeed, moveDistance);
             delay(msPerMove);
         }
         else if (dx < 0){ // West (left)
@@ -183,12 +182,12 @@ void executePath(float analogSpeed, float msPerMove, vii &points){
 
             dir = 2;
 
-            car.moveForward(analogSpeed);
+            car.moveForwardDistance(analogSpeed, moveDistance);
             delay(msPerMove);
         }
 
         currentPoint = nextPos;
-        // car.adjust(analogSpeed);
+        car.adjust(analogSpeed);
         car.stop();
     }
 
@@ -253,12 +252,9 @@ void setup()
     Serial.println("Successfully initiated car");
 
     // Initial drive into the maze
-    car.moveForward(analogSpeed);
-    delay(secondsPerMove * 1000);
-    car.stop();
+    car.moveForwardDistance(analogSpeed, moveDistance);
 
     executePath(analogSpeed, secondsPerMove * 1000, result);
-
 }
 
 void loop(){}

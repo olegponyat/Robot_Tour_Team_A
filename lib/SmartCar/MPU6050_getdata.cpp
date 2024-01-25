@@ -63,24 +63,29 @@ bool MPU6050_getdata::MPU6050_calibration(void)
     vx = accelgyro.getAccelerationX();
     vy = accelgyro.getAccelerationY();
     gzo += gz;
-    vxo += vx;
-    vyo += vy;
-    delay(2); // Small delay for stable readings
+    axo += vx;
+    ayo += vy;
+    // delay(2); // Small delay for stable readings
   }
   gzo /= times; //计算陀螺仪偏移
-  vxo /= times;
-  vyo /= times;
+  axo /= times;
+  ayo /= times;
+  resetDistance();
+  Serial.println("Axo: " + String(axo));
+  Serial.println("Ayo: " + String(ayo));
+  Serial.println("IVY: " + String(vy));
+  Serial.println("IVX: " + String(vx));
   // gzo = accelgyro.getRotationZ();
   return false;
 }
 bool MPU6050_getdata::MPU6050_dveGetEulerAngles(float *Yaw)
 {
-  unsigned long now = millis();   //当前时间(ms)
+  now = millis();   //当前时间(ms)
   dt = (now - lastTime) / 1000.0; //微分时间(s)
   lastTime = now;                 //上一次采样时间(ms)
   gz = accelgyro.getRotationZ();
   float gyroz = -(gz - gzo) / 131.0 * dt; //z轴角速度
-  if (fabs(gyroz) < 0.02)
+  if (fabs(gyroz) < 0.05)
   {
     gyroz = 0.00;
   }
@@ -89,41 +94,45 @@ bool MPU6050_getdata::MPU6050_dveGetEulerAngles(float *Yaw)
   return false;
 }
 
-bool MPU6050_getdata::MPU6050_getDistance(float *Distance){
-  unsigned long now_dist = millis();
-  vdt = (now_dist - lastTime_dist) / 1000.0;
+float MPU6050_getdata::MPU6050_getDistance(){
+  now_dist = millis();
+  acc_dt = (now_dist - lastTime_dist) / 1000.0; // dt in seconds
   lastTime_dist = now_dist;
 
-  // Store previous velocities
-  float prev_avx = avx;
-  float prev_avy = avy;
+  float accX = (accelgyro.getAccelerationX() - axo) / accScaleFactor * 9.81;
+  float accY = (accelgyro.getAccelerationY() - ayo) / accScaleFactor * 9.81;
 
-  // Update velocities
-  avx += (accelgyro.getAccelerationX() - vxo) * vdt;
-  avy += (accelgyro.getAccelerationY() - vyo) * vdt;
+  if (fabs(accX) < accThreshold) accX = 0;
+  if (fabs(accY) < accThreshold) accY = 0;
 
-  // Calculate average velocity for the interval
-  float avg_vel_x = (avx + prev_avx) / 2;
-  float avg_vel_y = (avy + prev_avy) / 2;
+  Serial.println("AccX: " + String(accX,10) + " | AccY: " + String(accY,10));
 
-  // Calculate incremental distance
-  float distX = avg_vel_x * vdt;
-  float distY = avg_vel_y * vdt;
+  vx += accX * acc_dt; // change in velocity
+  vy += accY * acc_dt; // change in velocity
 
-  // Update total distance
-  static float totalDistance = 0;
-  totalDistance += sqrt(pow(distX, 2) + pow(distY, 2));
+  Serial.println("Vx: " + String(vx,10) + " | Vy: " + String(vy,10));
 
-  *Distance = totalDistance;
+  distX += vx * acc_dt; // distX is equivalent of X distance alr traveled
+  distY += vy * acc_dt; // distX is equivalent of Y distance alr traveled
 
-  return true;
+  float Distance = sqrt(pow(distX, 2) + pow(distY, 2));
+
+  Serial.println("Dist (overall): " + String(Distance, 5) + " | DistX: " + String(distX, 5) + " | DistY: " + String(distY, 5));
+
+  return Distance;
 }
 
 void MPU6050_getdata::resetYawAtIntervals() {
-  MPU6050Getdata.agz = 0; // Reset the integrated yaw angle
+  agz = 0; // Reset the integrated yaw angle
+  now = millis();
+  lastTime = now;
 }
 
 void MPU6050_getdata::resetDistance() {
-  MPU6050Getdata.avx = 0;
-  MPU6050Getdata.avy = 0;
+  vx = 0;
+  vy = 0;
+  distX = 0;
+  distY = 0;
+  now_dist = millis();
+  lastTime_dist = now_dist;
 }
