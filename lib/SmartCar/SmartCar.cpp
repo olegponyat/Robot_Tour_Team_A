@@ -92,10 +92,11 @@ public:
         AppMPU6050getdata.resetDistance();
         float distance = 0;
         delay(100);
-        this->moveForward(speed);
         while (distance < distanceInM){
-            distance = AppMPU6050getdata.MPU6050_getDistance();
-            Serial.println("Distance traveled: " + String(distance) + "m");
+            distance = AppMPU6050getdata.MPU6050_getDistance('y');
+            this->moveForward(speed);
+            delay(4);
+            // Serial.println("Distance traveled: " + String(distance) + "m");
         }
         this->stop();
     }
@@ -108,8 +109,8 @@ public:
         delay(100);
         this->moveBackward(speed);
         while (distance < distanceInM){
-            distance = AppMPU6050getdata.MPU6050_getDistance();
-            Serial.println("Distance traveled: " + String(distance) + "m");
+            distance = AppMPU6050getdata.MPU6050_getDistance('y');
+            // Serial.println("Distance traveled: " + String(distance) + "m");
         }
         this->stop();
     }

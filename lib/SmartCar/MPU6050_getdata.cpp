@@ -56,7 +56,7 @@ bool MPU6050_getdata::MPU6050_dveInit(void)
 }
 bool MPU6050_getdata::MPU6050_calibration(void)
 {
-  unsigned short times = 100; //采样次数
+  int times = 200; //采样次数
   for (int i = 0; i < times; i++)
   {
     gz = accelgyro.getRotationZ();
@@ -65,16 +65,11 @@ bool MPU6050_getdata::MPU6050_calibration(void)
     gzo += gz;
     axo += vx;
     ayo += vy;
-    // delay(2); // Small delay for stable readings
+    delay(5); // Small delay for stable readings
   }
   gzo /= times; //计算陀螺仪偏移
   axo /= times;
   ayo /= times;
-  resetDistance();
-  Serial.println("Axo: " + String(axo));
-  Serial.println("Ayo: " + String(ayo));
-  Serial.println("IVY: " + String(vy));
-  Serial.println("IVX: " + String(vx));
   // gzo = accelgyro.getRotationZ();
   return false;
 }
@@ -94,30 +89,57 @@ bool MPU6050_getdata::MPU6050_dveGetEulerAngles(float *Yaw)
   return false;
 }
 
-float MPU6050_getdata::MPU6050_getDistance(){
+float MPU6050_getdata::lowPassFilter(float current, float prev, float alpha){
+  return alpha * current + ( 1 - alpha ) * prev;
+}
+
+float MPU6050_getdata::MPU6050_getDistance(char axis){
+
   now_dist = millis();
+  
+  float currAccY = accelgyro.getAccelerationY();
+  float currAccX = accelgyro.getAccelerationX();
+
+  while (currAccY > 1200 || -1200 > currAccY){
+    currAccY = accelgyro.getAccelerationY();
+    now = millis();
+  }
+
   acc_dt = (now_dist - lastTime_dist) / 1000.0; // dt in seconds
   lastTime_dist = now_dist;
 
-  float accX = (accelgyro.getAccelerationX() - axo) / accScaleFactor * 9.81;
-  float accY = (accelgyro.getAccelerationY() - ayo) / accScaleFactor * 9.81;
+  float filteredAccY = lowPassFilter(currAccY, prevAccY, lowPassAlpha);
+  float filteredAccX = lowPassFilter(currAccX, prevAccX, lowPassAlpha);
+
+  accX = (filteredAccX - axo) / accScaleFactor * 9.81;
+  accY = (filteredAccY - ayo) / accScaleFactor * 9.81;
+
+  prevAccY = currAccY;
+  prevAccX = currAccX;
+
+  if (axis == 'y') accX = 0;
+  else if (axis == 'x') accY = 0;
 
   if (fabs(accX) < accThreshold) accX = 0;
   if (fabs(accY) < accThreshold) accY = 0;
 
-  Serial.println("AccX: " + String(accX,10) + " | AccY: " + String(accY,10));
+  // Serial.println("AccX: " + String(accX,10) + " | AccY: " + String(accY,10));
 
   vx += accX * acc_dt; // change in velocity
   vy += accY * acc_dt; // change in velocity
 
-  Serial.println("Vx: " + String(vx,10) + " | Vy: " + String(vy,10));
+  // Serial.println("Vx: " + String(vx,10) + " | Vy: " + String(vy,10));
 
-  distX += vx * acc_dt; // distX is equivalent of X distance alr traveled
-  distY += vy * acc_dt; // distX is equivalent of Y distance alr traveled
+  distX += fabs(vx * acc_dt); // distX is equivalent of X distance alr traveled
+  distY += fabs(vy * acc_dt); // distX is equivalent of Y distance alr traveled
 
   float Distance = sqrt(pow(distX, 2) + pow(distY, 2));
 
-  Serial.println("Dist (overall): " + String(Distance, 5) + " | DistX: " + String(distX, 5) + " | DistY: " + String(distY, 5));
+  Serial.println(
+    "Dist (overall): " + String(Distance, 5) + " | AccY: " + String(accY, 5) + " | DistY: "
+    + String(distY, 5) + " | VY: " + String(vy, 5) + " | dt: " + String(acc_dt) +
+    " | Raw AccY: " + String(currAccY, 5) + " | filtered AccY: " + String(filteredAccY, 5)
+  );
 
   return Distance;
 }
