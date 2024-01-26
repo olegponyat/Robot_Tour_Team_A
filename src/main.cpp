@@ -16,8 +16,8 @@ const bool useDistance = false;
 const float delayBetweenMovesMS = 50; // delay between turn or move forward/backwards
 const float targetTime = 20;
 const int maxn = 7; // grid size
-const pii start = pii(6, 0); // y, x
-const float moveDistance = 0.45; // in meters
+const pii start = pii(6, 2); // y, x
+const float moveDistance = 0.5; // in meters
 
 /*DEBUG*/
 bool debug_move = true;
@@ -42,13 +42,13 @@ W = towards x = 0
 */
 
 //   s  l     l     l
-    {0, 0, 0, 0, 0, 0, 2},
-    {0, 3, 0, 3, 1, 3, 1}, // <- l
-    {0, 0, 4, 1, 0, 0, 0},
-    {0, 3, 1, 3, 0, 3, 0}, // <- l
-    {0, 0, 0, 0, 0, 1, 4},
-    {1, 3, 1, 3, 0, 3, 1}, // <- l
-    {0, 0, 0, 0, 0, 0, 0}
+    {0, 1, 0, 0, 2, 1, 0},
+    {0, 3, 0, 3, 0, 3, 0}, // <- l
+    {4, 0, 0, 1, 0, 0, 4},
+    {1, 3, 0, 3, 0, 3, 1}, // <- l
+    {0, 0, 0, 0, 0, 0, 0},
+    {1, 3, 0, 3, 4, 3, 0}, // <- l
+    {0, 1, 0, 0, 0, 1, 0}
 
 };
 
@@ -276,7 +276,7 @@ void setup()
     Serial.println("Successfully initiated car");
 
     // Initial drive into the maze
-    car.moveForwardForSeconds(analogSpeed, secondsPerMove * 1000);
+    car.moveForwardForSeconds(analogSpeed, secondsPerMove * 1000 * 0.75);
 
     executePath(analogSpeed, secondsPerMove * 1000, result);
 
