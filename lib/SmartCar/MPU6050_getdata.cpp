@@ -11,9 +11,11 @@
 #include "MPU6050.h"
 #include "Wire.h"
 #include "MPU6050_getdata.h"
-
 #include <stdio.h>
 #include <math.h>
+
+#include <StandardCplusplus.h>
+#include <algorithm>
 
 MPU6050 accelgyro;
 MPU6050_getdata MPU6050Getdata;
@@ -56,20 +58,46 @@ bool MPU6050_getdata::MPU6050_dveInit(void)
 }
 bool MPU6050_getdata::MPU6050_calibration(void)
 {
-  unsigned short times = 100; //采样次数
+  int times = 50; //采样次数
+  float data_points[times];
   for (int i = 0; i < times; i++)
   {
     gz = accelgyro.getRotationZ();
+    vy = accelgyro.getAccelerationY();
     gzo += gz;
-    delay(2); // Small delay for stable readings
+    ayMean += vy;
+    data_points[i] = vy;
+    delay(10); // Small delay for stable readings
   }
   gzo /= times; //计算陀螺仪偏移
+  ayMean /= times; // mean of acceleration of y
+  
+  float sum = 0;
+
+  for (int i = 0; i < times; i ++){
+    sum += pow(ayMean - data_points[i],2);
+  }
+
+  std::sort(data_points, data_points + times);
+  stdv = sqrt(sum/times);
+  if (times % 2 == 0) {
+      // For even number of elements, average the two middle elements
+      ayMedian = (data_points[times / 2 - 1] + data_points[times / 2]) / 2.0;
+  } else {
+      // For odd number of elements, take the middle element
+      ayMedian = data_points[times / 2];
+  }
+  ayo = ayMedian;
+  Serial.println("AyMean: " + String(ayMean, 5));
+  Serial.println("AyMedian: " + String(ayMedian, 5));
+  Serial.println("AyStdv: " + String(stdv, 5));
+  Serial.println("(Lower Range) " + String(ayo - (stdv * dev_threshold), 3) + " (Upper Range) " + String(ayo + (stdv * dev_threshold), 3));
   // gzo = accelgyro.getRotationZ();
   return false;
 }
 bool MPU6050_getdata::MPU6050_dveGetEulerAngles(float *Yaw)
 {
-  unsigned long now = millis();   //当前时间(ms)
+  now = millis();   //当前时间(ms)
   dt = (now - lastTime) / 1000.0; //微分时间(s)
   lastTime = now;                 //上一次采样时间(ms)
   gz = accelgyro.getRotationZ();
@@ -83,6 +111,62 @@ bool MPU6050_getdata::MPU6050_dveGetEulerAngles(float *Yaw)
   return false;
 }
 
+bool MPU6050_getdata::invalidValue(float value){
+  bool outlier = fabs(value - ayMean) > (stdv * dev_threshold);
+  bool change_too_fast = fabs(value - prevAccY) > dev_threshold * stdv;
+  return outlier && change_too_fast;
+};
+
+float MPU6050_getdata::lowPassFilter(float current, float prev, float alpha){
+  return alpha * current + ( 1 - alpha ) * prev;
+}
+
+float MPU6050_getdata::MPU6050_getDistance(char axis){
+
+  now_dist = millis();
+  float currAccY = accelgyro.getAccelerationY();
+
+  while (invalidValue(currAccY)){
+    Serial.println("  Rejected: " + String(currAccY, 5));
+    currAccY = accelgyro.getAccelerationY();
+    now_dist = millis();
+  }
+
+  acc_dt = (now_dist - lastTime_dist) / 1000.0; // dt in seconds
+  lastTime_dist = now_dist;
+
+  float filteredAccY = lowPassFilter(currAccY, prevAccY, lowPassAlpha);
+
+  accY = (filteredAccY - ayo) / accScaleFactor * 9.81;
+
+  prevAccY = currAccY;
+
+  // Serial.println("AccY: " + String(accY,10));
+
+  vy += accY * acc_dt; // change in velocity
+
+  distY += fabs(vy * acc_dt); // distX is equivalent of Y distance alr traveled
+
+  float Distance = fabs(distY);
+
+  Serial.println(
+    "Dist (overall): " + String(Distance, 5) + " | AccY: " + String(accY, 5) + " | DistY: "
+    + String(distY, 5) + " | VY: " + String(vy, 5) + " | dt: " + String(acc_dt) +
+    " | Raw AccY: " + String(currAccY, 5) + " | filtered AccY: " + String(filteredAccY, 5)
+  );
+
+  return Distance;
+}
+
 void MPU6050_getdata::resetYawAtIntervals() {
-  MPU6050Getdata.agz = 0; // Reset the integrated yaw angle
+  agz = 0; // Reset the integrated yaw angle
+  now = millis();
+  lastTime = now;
+}
+
+void MPU6050_getdata::resetDistance() {
+  vy = 0;
+  distY = 0;
+  now_dist = millis();
+  lastTime_dist = now_dist;
 }

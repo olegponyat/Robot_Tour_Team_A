@@ -8,7 +8,7 @@ Application_xxx Application_ConquerorCarxxx0;
 MPU6050_getdata AppMPU6050getdata;
 
 bool debug = false;
-const float adjust_threshold = 5.0;
+const float adjust_threshold = 4.5;
 const int lowest_speed = 40;
 
 class SmartCar
@@ -38,13 +38,6 @@ private:
         return round(number / 90.0f) * 90.0f;
     }
 
-    void recarlibrate(){
-        this->stop();
-        AppMPU6050getdata.MPU6050_calibration();
-        this->updateYawReference();
-    }
-
-
     void turnTillTarget(int speed, float target, bool turnLeft, bool (*condition)(float yaw, float target)){
         updateYawReference();
         AppMPU6050getdata.MPU6050_dveGetEulerAngles(&Yaw);
@@ -71,6 +64,12 @@ public:
         AppMPU6050getdata.MPU6050_calibration();
     }
 
+    void recalibrate(){
+        this->stop();
+        AppMPU6050getdata.MPU6050_calibration();
+        this->updateYawReference();
+    }
+
     void printAngle(){
         AppMPU6050getdata.MPU6050_dveGetEulerAngles(&Yaw);
         Serial.println("Current Angle: " + String(Yaw));
@@ -85,6 +84,52 @@ public:
             ConquerorCarMotionControl::Forward,
             speed // 0-255
         );
+    }
+
+    void moveForwardForSeconds(int speed, float ms){
+        for (int i = 0; i < ms/10; i ++){
+            this->moveForward(speed);
+            delay(10);
+        }
+        this->stop();
+    }
+
+    void moveBackwardForSeconds(int speed, float ms){
+        for (int i = 0; i < ms/10; i ++){
+            this->moveBackward(speed);
+            delay(10);
+        }
+        this->stop();
+    }
+
+    void moveForwardDistance(int speed, float distanceInM){
+        this->stop();
+        delay(100);
+        AppMPU6050getdata.resetDistance();
+        float distance = 0;
+        delay(100);
+        getFreeRAMSpace();
+        while (distance < distanceInM){
+            distance = AppMPU6050getdata.MPU6050_getDistance('y');
+            this->moveForward(speed);
+            // delay(4);
+            // Serial.println("Distance traveled: " + String(distance) + "m");
+        }
+        this->stop();
+    }
+
+    void moveBackwardDistance(int speed, float distanceInM){
+        this->stop();
+        delay(100);
+        AppMPU6050getdata.resetDistance();
+        float distance = 0;
+        delay(100);
+        this->moveBackward(speed);
+        while (distance < distanceInM){
+            distance = AppMPU6050getdata.MPU6050_getDistance('y');
+            // Serial.println("Distance traveled: " + String(distance) + "m");
+        }
+        this->stop();
     }
 
     void moveBackward(int speed)
@@ -132,7 +177,7 @@ public:
         this->adjust(speed);
     }
 
-    void  adjust(int speed){
+    void adjust(int speed){
         
         this->stop();
         AppMPU6050getdata.MPU6050_dveGetEulerAngles(&Yaw);

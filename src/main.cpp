@@ -12,9 +12,12 @@ typedef std::pair<int, int> pii;
 typedef std::vector<pii> vii;
 
 /*SETTINGS*/
-const float targetTime = 30;
+const bool useDistance = false;
+const float delayBetweenMovesMS = 50; // delay between turn or move forward/backwards
+const float targetTime = 35;
 const int maxn = 7; // grid size
 const pii start = pii(6, 0); // y, x
+const float moveDistance = 0.4; // in meters
 
 /*DEBUG*/
 bool debug_move = true;
@@ -138,39 +141,56 @@ void executePath(float analogSpeed, float msPerMove, vii &points){
             if (debug_move) Serial.println("Move North");
             
             if (dir == 1) car.turnLeft(analogSpeed);
-            else if (dir == 2) car.turnRight(analogSpeed);
+            else if (dir == 2) {
+                car.turnLeft(analogSpeed);
+                car.turnLeft(analogSpeed);
+            }
+            else if (dir == 3) car.turnRight(analogSpeed);
+
+            if (dir != 0) delay(delayBetweenMovesMS);
 
             dir = 0;
 
-            car.moveForward(analogSpeed);
-            delay(msPerMove);
+            if (useDistance) car.moveForwardDistance(analogSpeed, moveDistance);
+            else car.moveForwardForSeconds(analogSpeed, msPerMove);
+
             car.adjust(analogSpeed);
         }
         else if (dy > 0){ // South (down)
             if (debug_move) Serial.println("Move South");
 
-            if (dir == 1) car.turnLeft(analogSpeed);
-            else if (dir == 2) car.turnRight(analogSpeed); 
+            if (dir == 0) {
+                car.turnRight(analogSpeed);
+                car.turnRight(analogSpeed);
+            }
+            else if (dir == 1) car.turnRight(analogSpeed); 
+            else if (dir == 3) car.turnLeft(analogSpeed); 
 
-            dir = 0;       
+            if (dir != 2) delay(delayBetweenMovesMS);
 
-            car.moveBackward(analogSpeed);
-            delay(msPerMove);
+            dir = 2;       
+
+            if (useDistance) car.moveForwardDistance(analogSpeed, moveDistance);
+            else car.moveForwardForSeconds(analogSpeed, msPerMove);
+
             car.adjust(analogSpeed);
         }
         else if (dx > 0){ // East (right)
             if (debug_move) Serial.println("Move East");
         
             if (dir == 0) car.turnRight(analogSpeed);
-            else if (dir == 2) {
+            else if (dir == 2) car.turnLeft(analogSpeed);
+            else if (dir == 3) {
                 car.turnRight(analogSpeed);
                 car.turnRight(analogSpeed);
             }
 
+            if (dir != 1) delay(delayBetweenMovesMS);
+
             dir = 1;
 
-            car.moveForward(analogSpeed);
-            delay(msPerMove);
+            if (useDistance) car.moveForwardDistance(analogSpeed, moveDistance);
+            else car.moveForwardForSeconds(analogSpeed, msPerMove);
         }
         else if (dx < 0){ // West (left)
             if (debug_move) Serial.println("Move West");
@@ -179,17 +199,20 @@ void executePath(float analogSpeed, float msPerMove, vii &points){
             else if (dir == 1) {
                 car.turnLeft(analogSpeed);
                 car.turnLeft(analogSpeed);
-            }
+            }else if (dir == 2) car.turnRight(analogSpeed);
 
-            dir = 2;
+            if (dir != 3) delay(delayBetweenMovesMS);
 
-            car.moveForward(analogSpeed);
-            delay(msPerMove);
+            dir = 3;
+
+            if (useDistance) car.moveForwardDistance(analogSpeed, moveDistance);
+            else car.moveForwardForSeconds(analogSpeed, msPerMove);
         }
 
         currentPoint = nextPos;
-        // car.adjust(analogSpeed);
+        car.adjust(analogSpeed);
         car.stop();
+        delay(delayBetweenMovesMS);
     }
 
 }
@@ -253,12 +276,12 @@ void setup()
     Serial.println("Successfully initiated car");
 
     // Initial drive into the maze
-    car.moveForward(analogSpeed);
-    delay(secondsPerMove * 1000);
-    car.stop();
+    car.moveForwardForSeconds(analogSpeed, secondsPerMove * 1000);
 
     executePath(analogSpeed, secondsPerMove * 1000, result);
 
+    // car.init();
+    // car.moveForwardDistance(100,0.5);
 }
 
 void loop(){}
