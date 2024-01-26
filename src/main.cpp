@@ -171,11 +171,12 @@ void executePath(float analogSpeed, float msPerMove, vii &points){
                 car.turnRight(analogSpeed);
             }
 
+            if (dir == 0 || dir == 2) delay(100);
+
             dir = 1;
 
             if (useDistance) car.moveForwardDistance(analogSpeed, moveDistance);
             else car.moveForwardForSeconds(analogSpeed, msPerMove);
-            delay(msPerMove);
         }
         else if (dx < 0){ // West (left)
             if (debug_move) Serial.println("Move West");
@@ -186,16 +187,18 @@ void executePath(float analogSpeed, float msPerMove, vii &points){
                 car.turnLeft(analogSpeed);
             }
 
+            if (dir == 0 || dir == 1) delay(100);
+
             dir = 2;
 
             if (useDistance) car.moveForwardDistance(analogSpeed, moveDistance);
             else car.moveForwardForSeconds(analogSpeed, msPerMove);
-            delay(msPerMove);
         }
 
         currentPoint = nextPos;
         car.adjust(analogSpeed);
         car.stop();
+        delay(100);
     }
 
 }
