@@ -148,6 +148,5 @@ class MPU6050_6Axis_MotionApps20 : public MPU6050_Base {
         uint16_t dmpPacketSize;
 };
 
-typedef MPU6050_6Axis_MotionApps20 MPU6050;
 
 #endif /* _MPU6050_6AXIS_MOTIONAPPS20_H_ */

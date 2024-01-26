@@ -11,14 +11,28 @@
 #include "MPU6050.h"
 #include "Wire.h"
 #include "MPU6050_getdata.h"
+#include "MPU6050_6Axis_MotionApps20.h"
 #include <stdio.h>
 #include <math.h>
 
 #include <StandardCplusplus.h>
 #include <algorithm>
 
-MPU6050 accelgyro;
+// MPU6050 accelgyro;
+MPU6050_6Axis_MotionApps20 accelgyro;
 MPU6050_getdata MPU6050Getdata;
+
+const bool useDMP = true;
+Quaternion q;
+VectorFloat gravity;
+float ypr[3];
+
+// Buffer for reading from the DMP
+uint8_t mpuIntStatus;
+uint8_t devStatus;
+uint16_t packetSize;
+uint16_t fifoCount;
+uint8_t fifoBuffer[64];
 
 // static void MsTimer2_MPU6050getdata(void)
 // {
@@ -47,6 +61,12 @@ bool MPU6050_getdata::MPU6050_dveInit(void)
     }
   } while (chip_id == 0X00 || chip_id == 0XFF); //确保从机设备在线（强行等待 获取 ID ）
   accelgyro.initialize();
+  if (useDMP) {
+    accelgyro.dmpInitialize();
+    accelgyro.setDMPEnabled(true);
+    packetSize = accelgyro.dmpGetFIFOPacketSize();
+    Serial.println("Successfully initiated DMP.");
+  }
   // unsigned short times = 100; //采样次数
   // for (int i = 0; i < times; i++)
   // {
@@ -97,6 +117,15 @@ bool MPU6050_getdata::MPU6050_calibration(void)
 }
 bool MPU6050_getdata::MPU6050_dveGetEulerAngles(float *Yaw)
 {
+  if (useDMP){
+    accelgyro.dmpGetCurrentFIFOPacket(fifoBuffer);
+    accelgyro.dmpGetQuaternion(&q, fifoBuffer);
+    accelgyro.dmpGetGravity(&gravity, &q);
+    accelgyro.dmpGetYawPitchRoll(ypr, &q, &gravity);
+    *Yaw = ypr[0] * 180.0 / PI;
+    return false;
+  }
+
   now = millis();   //当前时间(ms)
   dt = (now - lastTime) / 1000.0; //微分时间(s)
   lastTime = now;                 //上一次采样时间(ms)
