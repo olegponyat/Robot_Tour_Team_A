@@ -8,7 +8,7 @@ Application_xxx Application_ConquerorCarxxx0;
 MPU6050_getdata AppMPU6050getdata;
 
 bool debug = false;
-const float adjust_threshold = 2.0;
+const float adjust_threshold = 2.5;
 const int lowest_speed = 40;
 
 class SmartCar
@@ -86,16 +86,33 @@ public:
         );
     }
 
+    void moveForwardForSeconds(int speed, float ms){
+        for (int i = 0; i < ms/10; i ++){
+            this->moveForward(speed);
+            delay(10);
+        }
+        this->stop();
+    }
+
+    void moveBackwardForSeconds(int speed, float ms){
+        for (int i = 0; i < ms/10; i ++){
+            this->moveBackward(speed);
+            delay(10);
+        }
+        this->stop();
+    }
+
     void moveForwardDistance(int speed, float distanceInM){
         this->stop();
         delay(100);
         AppMPU6050getdata.resetDistance();
         float distance = 0;
         delay(100);
+        getFreeRAMSpace();
         while (distance < distanceInM){
             distance = AppMPU6050getdata.MPU6050_getDistance('y');
             this->moveForward(speed);
-            delay(4);
+            // delay(4);
             // Serial.println("Distance traveled: " + String(distance) + "m");
         }
         this->stop();

@@ -12,10 +12,11 @@ typedef std::pair<int, int> pii;
 typedef std::vector<pii> vii;
 
 /*SETTINGS*/
-const float targetTime = 30;
+const bool useDistance = false;
+const float targetTime = 35;
 const int maxn = 7; // grid size
 const pii start = pii(6, 0); // y, x
-const float moveDistance = 0.55; // in meters
+const float moveDistance = 0.4; // in meters
 
 /*DEBUG*/
 bool debug_move = true;
@@ -143,7 +144,9 @@ void executePath(float analogSpeed, float msPerMove, vii &points){
 
             dir = 0;
 
-            car.moveForwardDistance(analogSpeed, moveDistance);
+            if (useDistance) car.moveForwardDistance(analogSpeed, moveDistance);
+            else car.moveForwardForSeconds(analogSpeed, msPerMove);
+
             car.adjust(analogSpeed);
         }
         else if (dy > 0){ // South (down)
@@ -154,7 +157,9 @@ void executePath(float analogSpeed, float msPerMove, vii &points){
 
             dir = 0;       
 
-            car.moveBackwardDistance(analogSpeed, moveDistance);
+            if (useDistance) car.moveBackwardDistance(analogSpeed, moveDistance);
+            else car.moveBackwardForSeconds(analogSpeed, msPerMove);
+
             car.adjust(analogSpeed);
         }
         else if (dx > 0){ // East (right)
@@ -168,7 +173,8 @@ void executePath(float analogSpeed, float msPerMove, vii &points){
 
             dir = 1;
 
-            car.moveForwardDistance(analogSpeed, moveDistance);
+            if (useDistance) car.moveForwardDistance(analogSpeed, moveDistance);
+            else car.moveForwardForSeconds(analogSpeed, msPerMove);
             delay(msPerMove);
         }
         else if (dx < 0){ // West (left)
@@ -182,7 +188,8 @@ void executePath(float analogSpeed, float msPerMove, vii &points){
 
             dir = 2;
 
-            car.moveForwardDistance(analogSpeed, moveDistance);
+            if (useDistance) car.moveForwardDistance(analogSpeed, moveDistance);
+            else car.moveForwardForSeconds(analogSpeed, msPerMove);
             delay(msPerMove);
         }
 
@@ -196,68 +203,68 @@ void executePath(float analogSpeed, float msPerMove, vii &points){
 void setup()
 {
     Serial.begin(9600);
-    // getFreeRAMSpace();
-    // // visualize();
+    getFreeRAMSpace();
+    // visualize();
 
-    // if (graphSetupError){
-    //     Serial.println("GRAPH SETUP ERROR. POSSIBLE ERRORS: ILLEGAL BARRIER SPOT.");
-    //     return;
-    // }
+    if (graphSetupError){
+        Serial.println("GRAPH SETUP ERROR. POSSIBLE ERRORS: ILLEGAL BARRIER SPOT.");
+        return;
+    }
 
-    // Serial.println("Started BFS");
+    Serial.println("Started BFS");
 
-    // bool reachedGoal = false;
-    // vii result;
+    bool reachedGoal = false;
+    vii result;
     
-    // pii nextStart = start;
+    pii nextStart = start;
     
-    // while (!reachedGoal){
-    //     vii path = BFS(nextStart, reachedGoal);
+    while (!reachedGoal){
+        vii path = BFS(nextStart, reachedGoal);
         
-    //     if (path.size() == 0){
-    //         Serial.println("NO SOLUTION");
-    //         return;
-    //     }
+        if (path.size() == 0){
+            Serial.println("NO SOLUTION");
+            return;
+        }
         
-    //     nextStart = path[path.size()-1];
-    //     result.insert(result.end(), path.begin(), path.end() - 1); 
-    //         // path.end() - 1 prevents adding a repeated point, bc the current endpoint is the new startpoint        
+        nextStart = path[path.size()-1];
+        result.insert(result.end(), path.begin(), path.end() - 1); 
+            // path.end() - 1 prevents adding a repeated point, bc the current endpoint is the new startpoint        
             
-    //     if (reachedGoal) result.push_back(nextStart); // adds back the endpoint if it is solution
+        if (reachedGoal) result.push_back(nextStart); // adds back the endpoint if it is solution
         
-    //     grid[nextStart.first][nextStart.second] = 0; // removes the bonus points 
-    // }
+        grid[nextStart.first][nextStart.second] = 0; // removes the bonus points 
+    }
 
-    // Serial.println("Found valid solution");
+    Serial.println("Found valid solution");
 
-    // if (debug_move){
-    //     for (size_t i = 0; i < result.size(); i ++){
-    //         Serial.print("(" + String(result[i].first) + "," + String(result[i].second) + ") => ");
-    //     }
-    //     Serial.println();
-    // }
+    if (debug_move){
+        for (size_t i = 0; i < result.size(); i ++){
+            Serial.print("(" + String(result[i].first) + "," + String(result[i].second) + ") => ");
+        }
+        Serial.println();
+    }
 
-    // int moves = result.size();
-    // float analogSpeed = calcSpeed(moves, targetTime);
-    // float secondsPerMove = targetTime / (float) moves;
+    int moves = result.size();
+    float analogSpeed = calcSpeed(moves, targetTime);
+    float secondsPerMove = targetTime / (float) moves;
 
-    // Serial.println("\n\n[Algorithm Summary]");
-    // Serial.println("Total Moves: " + String(moves));
-    // Serial.println("Analog Speed: " + String(analogSpeed));
-    // Serial.println("Seconds Per Move: " + String(secondsPerMove));
+    Serial.println("\n\n[Algorithm Summary]");
+    Serial.println("Total Moves: " + String(moves));
+    Serial.println("Analog Speed: " + String(analogSpeed));
+    Serial.println("Seconds Per Move: " + String(secondsPerMove));
 
-    // getFreeRAMSpace();
-    // Serial.print("Initiating car...");
-    // car.init();
-    // Serial.println("Successfully initiated car");
-
-    // // Initial drive into the maze
-    // car.moveForwardDistance(analogSpeed, moveDistance);
-
-    // executePath(analogSpeed, secondsPerMove * 1000, result);
-
+    getFreeRAMSpace();
+    Serial.print("Initiating car...");
     car.init();
-    car.moveForwardDistance(40,0.5);
+    Serial.println("Successfully initiated car");
+
+    // Initial drive into the maze
+    car.moveForwardForSeconds(analogSpeed, secondsPerMove * 1000);
+
+    executePath(analogSpeed, secondsPerMove * 1000, result);
+
+    // car.init();
+    // car.moveForwardDistance(100,0.5);
 }
 
 void loop(){}

@@ -11,9 +11,11 @@
 #include "MPU6050.h"
 #include "Wire.h"
 #include "MPU6050_getdata.h"
-
 #include <stdio.h>
 #include <math.h>
+
+#include <StandardCplusplus.h>
+#include <algorithm>
 
 MPU6050 accelgyro;
 MPU6050_getdata MPU6050Getdata;
@@ -56,20 +58,40 @@ bool MPU6050_getdata::MPU6050_dveInit(void)
 }
 bool MPU6050_getdata::MPU6050_calibration(void)
 {
-  int times = 200; //采样次数
+  int times = 50; //采样次数
+  float data_points[times];
   for (int i = 0; i < times; i++)
   {
     gz = accelgyro.getRotationZ();
-    vx = accelgyro.getAccelerationX();
     vy = accelgyro.getAccelerationY();
     gzo += gz;
-    axo += vx;
-    ayo += vy;
-    delay(5); // Small delay for stable readings
+    ayMean += vy;
+    data_points[i] = vy;
+    delay(10); // Small delay for stable readings
   }
   gzo /= times; //计算陀螺仪偏移
-  axo /= times;
-  ayo /= times;
+  ayMean /= times; // mean of acceleration of y
+  
+  float sum = 0;
+
+  for (int i = 0; i < times; i ++){
+    sum += pow(ayMean - data_points[i],2);
+  }
+
+  std::sort(data_points, data_points + times);
+  stdv = sqrt(sum/times);
+  if (times % 2 == 0) {
+      // For even number of elements, average the two middle elements
+      ayMedian = (data_points[times / 2 - 1] + data_points[times / 2]) / 2.0;
+  } else {
+      // For odd number of elements, take the middle element
+      ayMedian = data_points[times / 2];
+  }
+  ayo = ayMedian;
+  Serial.println("AyMean: " + String(ayMean, 5));
+  Serial.println("AyMedian: " + String(ayMedian, 5));
+  Serial.println("AyStdv: " + String(stdv, 5));
+  Serial.println("(Lower Range) " + String(ayo - (stdv * dev_threshold), 3) + " (Upper Range) " + String(ayo + (stdv * dev_threshold), 3));
   // gzo = accelgyro.getRotationZ();
   return false;
 }
@@ -80,7 +102,7 @@ bool MPU6050_getdata::MPU6050_dveGetEulerAngles(float *Yaw)
   lastTime = now;                 //上一次采样时间(ms)
   gz = accelgyro.getRotationZ();
   float gyroz = -(gz - gzo) / 131.0 * dt; //z轴角速度
-  if (fabs(gyroz) < 0.05)
+  if (fabs(gyroz) < 0.02)
   {
     gyroz = 0.00;
   }
@@ -89,6 +111,12 @@ bool MPU6050_getdata::MPU6050_dveGetEulerAngles(float *Yaw)
   return false;
 }
 
+bool MPU6050_getdata::invalidValue(float value){
+  bool outlier = fabs(value - ayMean) > (stdv * dev_threshold);
+  bool change_too_fast = fabs(value - prevAccY) > dev_threshold * stdv;
+  return outlier && change_too_fast;
+};
+
 float MPU6050_getdata::lowPassFilter(float current, float prev, float alpha){
   return alpha * current + ( 1 - alpha ) * prev;
 }
@@ -96,44 +124,30 @@ float MPU6050_getdata::lowPassFilter(float current, float prev, float alpha){
 float MPU6050_getdata::MPU6050_getDistance(char axis){
 
   now_dist = millis();
-  
   float currAccY = accelgyro.getAccelerationY();
-  float currAccX = accelgyro.getAccelerationX();
 
-  while (currAccY > 1200 || -1200 > currAccY){
+  while (invalidValue(currAccY)){
+    Serial.println("  Rejected: " + String(currAccY, 5));
     currAccY = accelgyro.getAccelerationY();
-    now = millis();
+    now_dist = millis();
   }
 
   acc_dt = (now_dist - lastTime_dist) / 1000.0; // dt in seconds
   lastTime_dist = now_dist;
 
   float filteredAccY = lowPassFilter(currAccY, prevAccY, lowPassAlpha);
-  float filteredAccX = lowPassFilter(currAccX, prevAccX, lowPassAlpha);
 
-  accX = (filteredAccX - axo) / accScaleFactor * 9.81;
   accY = (filteredAccY - ayo) / accScaleFactor * 9.81;
 
   prevAccY = currAccY;
-  prevAccX = currAccX;
 
-  if (axis == 'y') accX = 0;
-  else if (axis == 'x') accY = 0;
+  // Serial.println("AccY: " + String(accY,10));
 
-  if (fabs(accX) < accThreshold) accX = 0;
-  if (fabs(accY) < accThreshold) accY = 0;
-
-  // Serial.println("AccX: " + String(accX,10) + " | AccY: " + String(accY,10));
-
-  vx += accX * acc_dt; // change in velocity
   vy += accY * acc_dt; // change in velocity
 
-  // Serial.println("Vx: " + String(vx,10) + " | Vy: " + String(vy,10));
-
-  distX += fabs(vx * acc_dt); // distX is equivalent of X distance alr traveled
   distY += fabs(vy * acc_dt); // distX is equivalent of Y distance alr traveled
 
-  float Distance = sqrt(pow(distX, 2) + pow(distY, 2));
+  float Distance = fabs(distY);
 
   Serial.println(
     "Dist (overall): " + String(Distance, 5) + " | AccY: " + String(accY, 5) + " | DistY: "
@@ -151,9 +165,7 @@ void MPU6050_getdata::resetYawAtIntervals() {
 }
 
 void MPU6050_getdata::resetDistance() {
-  vx = 0;
   vy = 0;
-  distX = 0;
   distY = 0;
   now_dist = millis();
   lastTime_dist = now_dist;
