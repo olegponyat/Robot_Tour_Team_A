@@ -8,7 +8,8 @@ Application_xxx Application_ConquerorCarxxx0;
 MPU6050_getdata AppMPU6050getdata;
 
 bool debug = false;
-const float adjust_threshold = 4.5;
+const float adjust_threshold = 1.0;
+// 1.0 deg (best so far)
 const int lowest_speed = 40;
 
 class SmartCar
@@ -87,17 +88,17 @@ public:
     }
 
     void moveForwardForSeconds(int speed, float ms){
-        for (int i = 0; i < ms/10; i ++){
+        for (int i = 0; i < ms/5; i ++){
             this->moveForward(speed);
-            delay(10);
+            delay(5);
         }
         this->stop();
     }
 
     void moveBackwardForSeconds(int speed, float ms){
-        for (int i = 0; i < ms/10; i ++){
+        for (int i = 0; i < ms/5; i ++){
             this->moveBackward(speed);
-            delay(10);
+            delay(5);
         }
         this->stop();
     }
