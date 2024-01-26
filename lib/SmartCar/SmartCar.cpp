@@ -8,7 +8,7 @@ Application_xxx Application_ConquerorCarxxx0;
 MPU6050_getdata AppMPU6050getdata;
 
 bool debug = false;
-const float adjust_threshold = 2.5;
+const float adjust_threshold = 4.5;
 const int lowest_speed = 40;
 
 class SmartCar
