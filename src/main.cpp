@@ -13,10 +13,10 @@ typedef std::vector<pii> vii;
 
 /*SETTINGS*/
 const bool useDistance = false;
-const float delayBetweenMovesMS = 50; // delay between turn or move forward/backwards
+const float delayBetweenMovesMS = 25; // delay between turn or move forward/backwards
 const float targetTime = 20;
 const int maxn = 7; // grid size
-const pii start = pii(6, 2); // y, x
+const pii start = pii(4, 0); // y, x
 const float moveDistance = 0.5; // in meters
 
 /*DEBUG*/
@@ -42,15 +42,17 @@ W = towards x = 0
 */
 
 //   s  l     l     l
-    {0, 1, 0, 0, 2, 1, 0},
+    {4, 0, 0, 0, 4, 1, 4},
+    {1, 3, 0, 3, 1, 3, 0}, // <- l
+    {2, 0, 0, 0, 0, 1, 0},
     {0, 3, 0, 3, 0, 3, 0}, // <- l
-    {4, 0, 0, 1, 0, 0, 4},
-    {1, 3, 0, 3, 0, 3, 1}, // <- l
-    {0, 0, 0, 0, 0, 0, 0},
-    {1, 3, 0, 3, 4, 3, 0}, // <- l
-    {0, 1, 0, 0, 0, 1, 0}
+    {0, 0, 0, 1, 0, 0, 0},
+    {1, 3, 0, 3, 1, 3, 0}, // <- l
+    {4, 0, 0, 0, 4, 1, 4}
 
 };
+
+int Gatezones = 6;
 
 bool graphSetupError = false;
 bool vis[maxn][maxn];
@@ -73,7 +75,7 @@ void clearVis(){
             vis[i][j] = false;
 }
 
-vii BFS(pii start, bool &solved){
+vii BFS(pii start, bool &solved, bool find_sol=false){
     clearVis();
     std::queue<pii> q;
     std::map<pii, pii> parent;
@@ -86,7 +88,7 @@ vii BFS(pii start, bool &solved){
         int y = current.first, x = current.second;
         vis[y][x] = true;
         
-        if (grid[y][x] == 4 || grid[y][x] == 2){
+        if (grid[y][x] == 4 || (grid[y][x] == 2 && find_sol)){
             if (grid[y][x] == 2) solved = true;
             vii path;
             while (current != start){
@@ -236,12 +238,14 @@ void setup()
     pii nextStart = start;
     
     while (!reachedGoal){
-        vii path = BFS(nextStart, reachedGoal);
+        vii path = BFS(nextStart, reachedGoal, Gatezones==0);
         
         if (path.size() == 0){
             Serial.println("NO SOLUTION");
             return;
         }
+
+        Gatezones--;
         
         nextStart = path[path.size()-1];
         result.insert(result.end(), path.begin(), path.end() - 1); 
