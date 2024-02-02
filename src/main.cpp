@@ -13,8 +13,13 @@ typedef std::vector<pii> vii;
 
 /*SETTINGS*/
 const bool useDistance = false;
-const float delayBetweenMovesMS = 25; // delay between turn or move forward/backwards
-const float targetTime = 20;
+const float delayBetweenMovesMS = 30; // delay between turn or move forward/backwards
+const float targetTimeOffset = 5.0; // from experiment
+// Longer the time - the more the targetTimeOffset - BUT DO NOT EXCEED 6.5
+// shorter the time - the smaller - BUT NEVER 0
+// for reference: 75 seconds - 5.0 offset
+//                50 seconds - 3.5 offset
+const float targetTime = 25 + targetTimeOffset;
 const int maxn = 7; // grid size
 const pii start = pii(6, 6); // y, x
 const float moveDistance = 0.5; // in meters
@@ -42,17 +47,17 @@ W = towards x = 0
 */
 
 //   s  l     l     l
-    {0, 0, 0, 0, 0, 0, 2},
-    {0, 3, 0, 3, 1, 3, 1}, // <- l
-    {0, 0, 4, 1, 0, 0, 0},
-    {0, 3, 1, 3, 0, 3, 0}, // <- l
-    {0, 0, 0, 0, 0, 1, 4},
-    {1, 3, 1, 3, 0, 3, 1}, // <- l
+    {0, 0, 0, 0, 0, 0, 0},
+    {0, 3, 0, 3, 0, 3, 0}, // <- l
+    {0, 0, 0, 0, 0, 0, 0},
+    {0, 3, 0, 3, 0, 3, 0}, // <- l
+    {0, 0, 0, 0, 0, 0, 0},
+    {0, 3, 0, 3, 0, 3, 0}, // <- l
     {0, 0, 0, 0, 0, 0, 0}
 
 };
 
-int Gatezones = 2;
+int Gatezones = 3;
 
 bool graphSetupError = false;
 bool vis[maxn][maxn];
@@ -149,7 +154,11 @@ void executePath(float analogSpeed, float msPerMove, vii &points){
             }
             else if (dir == 3) car.turnRight(analogSpeed);
 
-            if (dir != 0) delay(delayBetweenMovesMS);
+            if (dir != 0) {
+                car.stop();
+                delay(delayBetweenMovesMS);
+                car.adjust(analogSpeed);
+            }
 
             dir = 0;
 
@@ -168,7 +177,11 @@ void executePath(float analogSpeed, float msPerMove, vii &points){
             else if (dir == 1) car.turnRight(analogSpeed); 
             else if (dir == 3) car.turnLeft(analogSpeed); 
 
-            if (dir != 2) delay(delayBetweenMovesMS);
+            if (dir != 2) {
+                car.stop();
+                delay(delayBetweenMovesMS);
+                car.adjust(analogSpeed);
+            }
 
             dir = 2;       
 
@@ -183,11 +196,16 @@ void executePath(float analogSpeed, float msPerMove, vii &points){
             if (dir == 0) car.turnRight(analogSpeed);
             else if (dir == 2) car.turnLeft(analogSpeed);
             else if (dir == 3) {
+                car.stop();
                 car.turnRight(analogSpeed);
                 car.turnRight(analogSpeed);
             }
 
-            if (dir != 1) delay(delayBetweenMovesMS);
+            if (dir != 1) {
+                car.stop();
+                delay(delayBetweenMovesMS);
+                car.adjust(analogSpeed);
+            }
 
             dir = 1;
 
@@ -203,7 +221,11 @@ void executePath(float analogSpeed, float msPerMove, vii &points){
                 car.turnLeft(analogSpeed);
             }else if (dir == 2) car.turnRight(analogSpeed);
 
-            if (dir != 3) delay(delayBetweenMovesMS);
+            if (dir != 3) {
+                car.stop();
+                delay(delayBetweenMovesMS);
+                car.adjust(analogSpeed);
+            }
 
             dir = 3;
 
@@ -239,7 +261,7 @@ void setup()
     
     while (!reachedGoal){
         vii path = BFS(nextStart, reachedGoal, Gatezones==0);
-        
+
         if (path.size() == 0){
             Serial.println("NO SOLUTION");
             return;
@@ -280,12 +302,10 @@ void setup()
     Serial.println("Successfully initiated car");
 
     // Initial drive into the maze
-    car.moveForwardForSeconds(analogSpeed, secondsPerMove * 1000 * 0.75);
+    car.moveForwardForSeconds(analogSpeed, secondsPerMove * 1000 * 0.70);
 
     executePath(analogSpeed, secondsPerMove * 1000, result);
 
-    // car.init();
-    // car.moveForwardDistance(100,0.5);
 }
 
 void loop(){}
