@@ -8,9 +8,12 @@ Application_xxx Application_ConquerorCarxxx0;
 MPU6050_getdata AppMPU6050getdata;
 
 bool debug = false;
-const float adjust_threshold = 1.0;
+const float adjust_threshold = 2.5;
+// when the analog is above 100 - set it to 1.o
+// when analog is below 100 - set it to higher values such as 2.0 or 2.5
+const float moveDelayInterval = 5; // in ms
 // 1.0 deg (best so far)
-const int lowest_speed = 40;
+const int lowest_speed = 45;
 
 class SmartCar
 {
@@ -33,6 +36,15 @@ private:
 
         // Turn logic
         return speed;
+    }
+
+    int calculateStraightGraduateSpeed(float currentIteration, float totalIteration, int maxSpeed){
+
+        int graduateSpeed = ( 1 - pow((currentIteration/totalIteration), 4) ) * maxSpeed;
+
+        if (graduateSpeed < maxSpeed/1.5) return max(maxSpeed/1.5, lowest_speed);
+        return graduateSpeed;
+
     }
 
     float closestMultipleOf90(float number) {
@@ -88,17 +100,29 @@ public:
     }
 
     void moveForwardForSeconds(int speed, float ms){
-        for (int i = 0; i < ms/5; i ++){
-            this->moveForward(speed);
-            delay(5);
+        updateYawReference();
+        for (int i = 0; i < ms/moveDelayInterval; i ++){
+            int speedNow = calculateStraightGraduateSpeed(i+1, ms/5, speed);
+            this->moveForward(speedNow);
+            if (speedNow < speed) {
+                float multiplier = speed/speedNow;
+                delay(moveDelayInterval * multiplier);
+            }
+            else delay(moveDelayInterval);
         }
         this->stop();
     }
 
     void moveBackwardForSeconds(int speed, float ms){
-        for (int i = 0; i < ms/5; i ++){
-            this->moveBackward(speed);
-            delay(5);
+        updateYawReference();
+        for (int i = 0; i < ms/moveDelayInterval; i ++){
+            int speedNow = calculateStraightGraduateSpeed(i+1, ms/5, speed);
+            this->moveBackward(speedNow);
+            if (speedNow < speed) {
+                float multiplier = speed/speedNow;
+                delay(moveDelayInterval * multiplier);
+            }
+            else delay(moveDelayInterval);
         }
         this->stop();
     }
