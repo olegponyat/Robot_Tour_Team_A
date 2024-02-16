@@ -8,7 +8,7 @@ Application_xxx Application_ConquerorCarxxx0;
 MPU6050_getdata AppMPU6050getdata;
 
 bool debug = false;
-const float adjust_threshold = 1.0;
+const float adjust_threshold = 5.0;
 // 1.0 deg (best so far)
 const int lowest_speed = 40;
 

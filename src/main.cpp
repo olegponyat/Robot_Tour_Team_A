@@ -14,9 +14,9 @@ typedef std::vector<pii> vii;
 /*SETTINGS*/
 const bool useDistance = false;
 const float delayBetweenMovesMS = 25; // delay between turn or move forward/backwards
-const float targetTime = 20;
+const float targetTime = 50;
 const int maxn = 7; // grid size
-const pii start = pii(4, 0); // y, x
+const pii start = pii(6, 4); // y, x
 const float moveDistance = 0.5; // in meters
 
 /*DEBUG*/
@@ -42,13 +42,13 @@ W = towards x = 0
 */
 
 //   s  l     l     l
-    {4, 0, 0, 0, 4, 1, 4},
-    {1, 3, 0, 3, 1, 3, 0}, // <- l
-    {2, 0, 0, 0, 0, 1, 0},
+    {4, 1, 4, 0, 0, 0, 4},
+    {0, 3, 1, 3, 1, 3, 0}, // <- l
+    {0, 0, 0, 0, 0, 1, 0},
+    {0, 3, 1, 3, 1, 3, 0}, // <- l
+    {4, 1, 0, 0, 4, 0, 0},
     {0, 3, 0, 3, 0, 3, 0}, // <- l
-    {0, 0, 0, 1, 0, 0, 0},
-    {1, 3, 0, 3, 1, 3, 0}, // <- l
-    {4, 0, 0, 0, 4, 1, 4}
+    {2, 1, 0, 0, 0, 1, 4}
 
 };
 
