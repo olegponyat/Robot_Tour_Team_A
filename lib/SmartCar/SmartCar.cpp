@@ -8,7 +8,7 @@ Application_xxx Application_ConquerorCarxxx0;
 MPU6050_getdata AppMPU6050getdata;
 
 bool debug = false;
-const float adjust_threshold = 2.5;
+const float adjust_threshold = 10;
 // when the analog is above 100 - set it to 1.o
 // when analog is below 100 - set it to higher values such as 2.0 or 2.5
 const float moveDelayInterval = 5; // in ms

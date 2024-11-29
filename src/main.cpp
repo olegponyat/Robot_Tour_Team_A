@@ -14,15 +14,15 @@ typedef std::vector<pii> vii;
 /*SETTINGS*/
 const bool useDistance = false;
 const float delayBetweenMovesMS = 30; // delay between turn or move forward/backwards
-const float targetTimeOffset = 5.0; // from experiment
+const float targetTimeOffset = 2; // from experiment
 // Longer the time - the more the targetTimeOffset - BUT DO NOT EXCEED 6.5
 // shorter the time - the smaller - BUT NEVER 0
 // for reference: 75 seconds - 5.0 offset
 //                50 seconds - 3.5 offset
-const float targetTime = 25 + targetTimeOffset;
-const int maxn = 7; // grid size
-const pii start = pii(6, 6); // y, x
-const float moveDistance = 0.5; // in meters
+const float targetTime = 27 + targetTimeOffset;
+const int maxn = 9; // grid size
+const pii start = pii(8, 0); // y, x
+const float moveDistance = 0.48; // in meters
 
 /*DEBUG*/
 bool debug_move = true;
@@ -46,14 +46,16 @@ N = towards y = 0
 W = towards x = 0
 */
 
-//   s  l     l     l
-    {0, 0, 0, 0, 0, 0, 0},
-    {0, 3, 0, 3, 0, 3, 0}, // <- l
-    {0, 0, 0, 0, 0, 0, 0},
-    {0, 3, 0, 3, 0, 3, 0}, // <- l
-    {0, 0, 0, 0, 0, 0, 0},
-    {0, 3, 0, 3, 0, 3, 0}, // <- l
-    {0, 0, 0, 0, 0, 0, 0}
+//   s  l     l     l     l
+    {0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 3, 0, 3, 0, 3, 0, 3, 0}, // <- l
+    {0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 3, 0, 3, 0, 3, 0, 3, 0}, // <- l
+    {0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 3, 0, 3, 0, 3, 0, 3, 0}, // <- l
+    {0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 3, 0, 3, 0, 3, 0, 3, 0}, // <- l
+    {0, 0, 0, 0, 0, 0, 0, 0, 0},
 
 };
 
