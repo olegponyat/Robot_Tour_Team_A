@@ -88,7 +88,9 @@ static void ApplicationFunctionSet_ConquerorCarMotionControl(ConquerorCarMotionC
   {
   case /* constant-expression */
       Forward:
-    ApplicationFunctionSet_ConquerorCarLinearMotionControl(Forward, directionRecord, speed, Kp, UpperLimit);
+    // ApplicationFunctionSet_ConquerorCarLinearMotionControl(Forward, directionRecord, speed, Kp, UpperLimit);
+    AppMotor.DeviceDriverSet_Motor_control(/*direction_A*/ direction_just, /*speed_A*/ speed,
+                                           /*direction_B*/ direction_just, /*speed_B*/ speed+4, /*controlED*/ control_enable); // Motor control
     directionRecord = 1;
     break;
   case /* constant-expression */ Backward:
@@ -100,13 +102,13 @@ static void ApplicationFunctionSet_ConquerorCarMotionControl(ConquerorCarMotionC
     /* code */
     directionRecord = 3;
     AppMotor.DeviceDriverSet_Motor_control(/*direction_A*/ direction_just, /*speed_A*/ speed,
-                                           /*direction_B*/ direction_back, /*speed_B*/ speed, /*controlED*/ control_enable); // Motor control
+                                           /*direction_B*/ direction_back, /*speed_B*/ speed+4, /*controlED*/ control_enable); // Motor control
     break;
   case /* constant-expression */ Right:
     /* code */
     directionRecord = 4;
     AppMotor.DeviceDriverSet_Motor_control(/*direction_A*/ direction_back, /*speed_A*/ speed,
-                                           /*direction_B*/ direction_just, /*speed_B*/ speed, /*controlED*/ control_enable); // Motor control
+                                           /*direction_B*/ direction_just, /*speed_B*/ speed+4, /*controlED*/ control_enable); // Motor control
     break;
   case /* constant-expression */ LeftForward:
     /* code */

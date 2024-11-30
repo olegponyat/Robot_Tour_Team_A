@@ -19,10 +19,11 @@ const float targetTimeOffset = 2; // from experiment
 // shorter the time - the smaller - BUT NEVER 0
 // for reference: 75 seconds - 5.0 offset
 //                50 seconds - 3.5 offset
-const float targetTime = 27 + targetTimeOffset;
-const int maxn = 9; // grid size
-const pii start = pii(8, 0); // y, x
-const float moveDistance = 0.48; // in meters
+const float targetTime = 20 + targetTimeOffset;
+const int maxy = 9; // grid size
+const int maxx = 7;
+const pii start = pii(8, 2); // y, x
+const float moveDistance = 0.5; // in meters
 
 /*DEBUG*/
 bool debug_move = true;
@@ -31,7 +32,7 @@ bool debug_move = true;
 // goal = 2
 
 
-int grid[maxn][maxn] = {
+int grid[maxy][maxx] = {
 
 /*
 s = start, l = grid line
@@ -47,22 +48,29 @@ W = towards x = 0
 */
 
 //   s  l     l     l     l
-    {0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 3, 0, 3, 0, 3, 0, 3, 0}, // <- l
-    {0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 3, 0, 3, 0, 3, 0, 3, 0}, // <- l
-    {0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 3, 0, 3, 0, 3, 0, 3, 0}, // <- l
-    {0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 3, 0, 3, 0, 3, 0, 3, 0}, // <- l
-    {0, 0, 0, 0, 0, 0, 0, 0, 0},
+    // {2, 0, 0, 0, 0, 0, 0, 0, 0},
+    // {0, 3, 0, 3, 0, 3, 0, 3, 0}, // <- l
+    // {0, 0, 0, 0, 0, 0, 4, 1, 0},
+    // {1, 3, 0, 3, 0, 3, 0, 3, 1}, // <- l
+    // {0, 0, 4, 1, 0, 0, 0, 0, 0},
+    // {0, 3, 0, 3, 0, 3, 1, 3, 1}, // <- l
+    // {0, 0, 0, 0, 0, 0, 4, 0, 0}
 
+    {0, 0, 0, 1, 0, 0, 2},
+    {0, 3, 0, 3, 0, 3, 0}, // <- l
+    {0, 0, 4, 0, 0, 0, 0},
+    {0, 3, 1, 3, 0, 3, 0}, // <- l
+    {0, 0, 0, 0, 0, 0, 0},
+    {0, 3, 0, 3, 0, 3, 0}, // <- l
+    {4, 1, 0, 0, 4, 0, 0},
+    {0, 3, 0, 3, 1, 3, 0}, // <- l
+    {0, 1, 0, 1, 0, 0, 0}
 };
 
 int Gatezones = 3;
 
 bool graphSetupError = false;
-bool vis[maxn][maxn];
+bool vis[maxy][maxx];
 int dx[4] = {2, -2, 0, 0};
 int dy[4] = {0, 0, 2, -2};
 int gx[4] = {1, -1, 0, 0};
@@ -77,8 +85,8 @@ Grid lines are odd numbers:
 */
 
 void clearVis(){
-    for (int i = 0; i < maxn; i ++)
-        for (int j = 0; j < maxn; j ++)
+    for (int i = 0; i < maxy; i ++)
+        for (int j = 0; j < maxx; j ++)
             vis[i][j] = false;
 }
 
@@ -108,12 +116,12 @@ vii BFS(pii start, bool &solved, bool find_sol=false){
         }
         
         for (int i = 0 ; i < 4; i ++){
-            int ny = y + dy[i];
+            int ny = y + dy[i]; //4, 10, 4, 9
             int nx = x + dx[i];
             int ngy = y + gy[i];
             int ngx = x + gx[i];
             
-            if ( nx >= 0 && nx < maxn && ny >= 0 && ny < maxn){
+            if ( nx >= 0 && nx < maxx && ny >= 0 && ny < maxy){
                 if (grid[ngy][ngx] != 0) continue;
                 if (vis[ny][nx]) continue;
                 pii neighbor = std::make_pair(ny, nx);
