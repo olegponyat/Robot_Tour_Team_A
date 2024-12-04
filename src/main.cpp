@@ -19,11 +19,11 @@ const float targetTimeOffset = 2; // from experiment
 // shorter the time - the smaller - BUT NEVER 0
 // for reference: 75 seconds - 5.0 offset
 //                50 seconds - 3.5 offset
-const float targetTime = 20 + targetTimeOffset;
-const int maxy = 9; // grid size
-const int maxx = 7;
-const pii start = pii(8, 2); // y, x
-const float moveDistance = 0.5; // in meters
+const float targetTime = 31 + targetTimeOffset;
+const int maxy = 7; // grid size
+const int maxx = 9;
+const pii start = pii(6, 2); // y, x
+const float moveDistance = 0.49; // in meters
 
 /*DEBUG*/
 bool debug_move = true;
@@ -48,26 +48,26 @@ W = towards x = 0
 */
 
 //   s  l     l     l     l
-    // {2, 0, 0, 0, 0, 0, 0, 0, 0},
-    // {0, 3, 0, 3, 0, 3, 0, 3, 0}, // <- l
-    // {0, 0, 0, 0, 0, 0, 4, 1, 0},
-    // {1, 3, 0, 3, 0, 3, 0, 3, 1}, // <- l
-    // {0, 0, 4, 1, 0, 0, 0, 0, 0},
-    // {0, 3, 0, 3, 0, 3, 1, 3, 1}, // <- l
-    // {0, 0, 0, 0, 0, 0, 4, 0, 0}
+    {0, 1, 4, 0, 0, 0, 0, 0, 0},
+    {0, 3, 0, 3, 0, 3, 1, 3, 0}, // <- l
+    {0, 0, 0, 0, 0, 1, 2, 1, 0},
+    {0, 3, 1, 3, 0, 3, 0, 3, 0}, // <- l
+    {0, 0, 0, 1, 4, 1, 0, 0, 0},
+    {0, 3, 0, 3, 1, 3, 0, 3, 0}, // <- l
+    {4, 0, 0, 1, 0, 0, 4, 0, 0}
 
-    {0, 0, 0, 1, 0, 0, 2},
-    {0, 3, 0, 3, 0, 3, 0}, // <- l
-    {0, 0, 4, 0, 0, 0, 0},
-    {0, 3, 1, 3, 0, 3, 0}, // <- l
-    {0, 0, 0, 0, 0, 0, 0},
-    {0, 3, 0, 3, 0, 3, 0}, // <- l
-    {4, 1, 0, 0, 4, 0, 0},
-    {0, 3, 0, 3, 1, 3, 0}, // <- l
-    {0, 1, 0, 1, 0, 0, 0}
+    // {0, 0, 0, 0, 0, 0, 0},
+    // {0, 3, 0, 3, 0, 3, 0}, // <- l
+    // {0, 0, 0, 0, 0, 0, 0},
+    // {0, 3, 0, 3, 0, 3, 0}, // <- l
+    // {0, 0, 0, 0, 0, 0, 0},
+    // {0, 3, 0, 3, 0, 3, 0}, // <- l
+    // {0, 0, 0, 0, 0, 0, 0},
+    // {0, 3, 0, 3, 0, 3, 0}, // <- l
+    // {0, 0, 0, 0, 0, 0, 0}
 };
 
-int Gatezones = 3;
+int Gatezones = 4;
 
 bool graphSetupError = false;
 bool vis[maxy][maxx];
@@ -299,7 +299,7 @@ void setup()
 
     int moves = result.size();
     float analogSpeed = calcSpeed(moves, targetTime);
-    float secondsPerMove = targetTime / (float) moves;
+    float secondsPerMove = (targetTime+((delayBetweenMovesMS/1000)*((float)moves-1))) / ((float) moves-1);
 
     Serial.println("\n\n[Algorithm Summary]");
     Serial.println("Total Moves: " + String(moves));

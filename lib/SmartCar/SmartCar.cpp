@@ -8,7 +8,7 @@ Application_xxx Application_ConquerorCarxxx0;
 MPU6050_getdata AppMPU6050getdata;
 
 bool debug = false;
-const float adjust_threshold = 10;
+const float adjust_threshold = 5;
 // when the analog is above 100 - set it to 1.o
 // when analog is below 100 - set it to higher values such as 2.0 or 2.5
 const float moveDelayInterval = 5; // in ms
@@ -214,9 +214,9 @@ public:
         Serial.println("Adjust Target | Current Yaw: " + String(Yaw) + " | target: " + String(target));
 
         if (Yaw > target){ // too far right, turn left
-            turnTillTarget(speed, target, true, [](float Yaw, float target) { return Yaw > target; });
+            turnTillTarget(speed, target, true, [](float Yaw, float target) { return Yaw < target; });
         }else{ // too far left, turn right
-            turnTillTarget(speed, target, false, [](float Yaw, float target) { return Yaw < target; });
+            turnTillTarget(speed, target, false, [](float Yaw, float target) { return Yaw > target; });
         }
         this->stop();
         AppMPU6050getdata.resetYawAtIntervals();
